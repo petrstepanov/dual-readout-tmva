@@ -1,0 +1,13 @@
+Find TMVA introduction here:
+https://root.cern/manual/tmva/
+
+Find example ROOT file with signal and background here:
+http://root.cern/files/tmva_class_example.root
+
+Users Guide:
+https://root.cern.ch/download/doc/tmva/TMVAUsersGuide.pdf
+
+
+Training Phase
+
+Application Phase
