@@ -65,6 +65,9 @@ TH1* FileUtils::tekWaveformToHist(const char* filePath){
 	for (int i=1; i<=21; i++){
 		std::string line;
 		std::getline (myfile, line);
+		if (myfile.fail()){
+			break; // exit if not successful read
+		}
 	}
 
 	// Start reading values until EOF
@@ -75,7 +78,9 @@ TH1* FileUtils::tekWaveformToHist(const char* filePath){
 		double col1, col2;
 		char comma;
 		myfile >> col1 >> comma >> col2;
-		if (myfile.fail()) break; // exit if not successful read
+		if (myfile.fail()){
+			break; // exit if not successful read
+		}
 
 		time.push_back(col1);
 		ch1.push_back(col2);
@@ -88,8 +93,13 @@ TH1* FileUtils::tekWaveformToHist(const char* filePath){
 	// Create histogram
 	TString histName = FileUtils::getFileNameNoExtensionFromPath(filePath);
 	TUUID uid = TUUID();
+	TString uidSuffix = uid.AsString();
 	histName += "_";
-	histName += uid.AsString();
+	histName += uidSuffix(0,4);
+
+	if (time.size() <= 2){
+		return nullptr;
+	}
 
 	double binWidth = time[1] - time[0];
 	double leftEdge = time[1] - binWidth/2;

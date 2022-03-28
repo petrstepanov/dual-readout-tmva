@@ -4,4 +4,7 @@
 #pragma link off all functions;
 #pragma link C++ nestedclasses;
 
+// CanvasHelper
+// #pragma link C++ class CanvasHelper+;
+
 #endif
