@@ -24,11 +24,13 @@
 
 # Manually append extra ROOT libraries (why missing?)
   list(APPEND LIB_NAMES "ROOT::Gui")
-  list(APPEND LIB_NAMES "ROOT::RooFit")
-  list(APPEND LIB_NAMES "ROOT::RooFitCore")
+#  list(APPEND LIB_NAMES "ROOT::RooFit")
+#  list(APPEND LIB_NAMES "ROOT::RooFitCore")
   list(APPEND LIB_NAMES "ROOT::Html")
   list(APPEND LIB_NAMES "ROOT::Minuit")
   list(APPEND LIB_NAMES "ROOT::Fumili")
+  list(APPEND LIB_NAMES "ROOT::TMVA")
+  list(APPEND LIB_NAMES "ROOT::TMVAGui")
 
 # message(STATUS "Modified ROOT libraries:")
 # message(STATUS "${LIB_NAMES}")

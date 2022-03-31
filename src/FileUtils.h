@@ -17,7 +17,7 @@ namespace FileUtils {
 	TH1* tekWaveformToHist(const char* fileName);
 
 	// Open file with checks
-	TFile* openFile(const char* fileName);
+	/// TFile* openFile(const char* fileName);
 
 	// Extract file name from path
 	TString getFileNameFromPath(const char* path);

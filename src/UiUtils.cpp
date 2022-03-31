@@ -1,9 +1,12 @@
 #include "UiUtils.h"
+#include "HistUtils.h"
 
 #include <TGMsgBox.h>
 #include <TROOT.h>
 #include <TText.h>
 #include <TEnv.h>
+
+using namespace UiUtils;
 
 void UiUtils::msgBoxInfo(const char* title, const char* text){
   new TGMsgBox(gClient->GetRoot(), NULL, title, text,
@@ -27,7 +30,7 @@ void UiUtils::saveHistogramAsImage(TH1* hist, const char* imageFilePath){
 	hist->Copy(*trimHist);
 
 	// Trim histogram to 400 ns
-	trimHist->GetXaxis()->SetRangeUser(trimHist->GetXaxis()->GetBinLowEdge(1), 400E-9);
+	trimHist->GetXaxis()->SetRangeUser(trimHist->GetXaxis()->GetBinLowEdge(1), HistUtils::rightEdgeSeconds);
 	trimHist->Draw();
 
 	c.SaveAs(imageFilePath);

@@ -6,11 +6,13 @@
 #include <TGClient.h>
 #include <TGFileDialog.h>
 #include <TObjString.h>
-// #include <TUUID.h>
+#include <TUUID.h>
 // #include <TCanvas.h>
 
 #include <iostream>
 #include <fstream>
+
+using namespace FileUtils;
 
 TString FileUtils::getDirectoryPath() {
 	TGFileInfo fi;
@@ -118,16 +120,16 @@ TH1* FileUtils::tekWaveformToHist(const char* filePath){
 	return hist;
 }
 
-TFile* FileUtils::openFile(const char* fileName){
-  std::cout << "Opening file \"" << fileName << "\"..." << std::endl;
-  TFile *file = new TFile(fileName);
-  if (file->IsZombie()){
-    file->Close();
-    std::cerr << "Error opening file \"" << fileName << "\". Aborting." << std::endl;
-    exit(1);
-  }
-  return file;
-}
+//TFile* FileUtils::openFile(const char* fileName){
+//  std::cout << "Opening file \"" << fileName << "\"..." << std::endl;
+//  TFile *file = new TFile(fileName);
+//  if (file->IsZombie()){
+//    file->Close();
+//    std::cerr << "Error opening file \"" << fileName << "\". Aborting." << std::endl;
+//    exit(1);
+//  }
+//  return file;
+//}
 
 TString FileUtils::getFileNameFromPath(const char* fileNamePath){
 	// Get file path directory

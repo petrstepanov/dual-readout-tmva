@@ -1,7 +1,11 @@
-/build/
-/data/**/*.png
-/data/**/*.root
+build/
+data/**/*.png
+data/**/*.root
 
 .project
 .cproject
 .settings
+
+dataset/**
+
+tmva*

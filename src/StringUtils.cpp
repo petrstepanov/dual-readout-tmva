@@ -5,6 +5,8 @@
 #include <TObjArray.h>
 #include <TPRegexp.h>
 
+using namespace StringUtils;
+
 TString StringUtils::stripExtension(const char *str) {
 	TString s = str;
 	Ssiz_t pos = s.Last('.');
