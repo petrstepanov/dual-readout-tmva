@@ -351,7 +351,7 @@ void trainTMVA(const char *trainingFileURI, MLFileType rootFileType = MLFileType
 
 void trainTMVA_CNN(const char *trainingFileURI){
 	   bool useTMVACNN = kTRUE; // (opt.size() > 0) ? opt[0] : false;
-	   bool useTMVADNN = kTRUE; //(opt.size() > 2) ? opt[2] : false;
+	   bool useTMVADNN = kFALSE; //(opt.size() > 2) ? opt[2] : false;
 	   bool useTMVABDT = kTRUE; // (opt.size() > 3) ? opt[3] : false;
 	   bool usePyTorchCNN = kTRUE; //(opt.size() > 4) ? opt[4] : false;
 	#ifndef R__HAS_TMVACPU
