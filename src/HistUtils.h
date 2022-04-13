@@ -5,11 +5,18 @@
 #include <TList.h>
 #include <TTree.h>
 
+//enum class VarNamingPattern {
+//	varN,
+//	fileName
+//};
+
 namespace HistUtils {
 	// Get Mean Y value
 	Double_t getMeanY(TH1* hist);
 
 	// Convert histogram into a Tree branch for TMVA
+	// TTree* histsToTree(TList* hists, const char* treeName, const char* treeTitle, VarNamingPattern namingPattern = VarNamingPattern::varN);
+	TTree* histsToTreeLin(TList* hists, const char* treeName, const char* treeTitle);
 	TTree* histsToTree(TList* hists, const char* treeName, const char* treeTitle);
 	TTree* histsToTreeXY(TList* hists, const char* treeName, const char* treeTitle);
 
