@@ -593,7 +593,7 @@ void trainTMVA_CNN(const char *trainingFileURI){
 
 	   if (useTMVACNN) {
 
-	      TString inputLayoutString("InputLayout=1|16|16");
+	      TString inputLayoutString("InputLayout=1|1065");
 
 	      // Batch Layout
 	      TString layoutString("Layout=CONV|10|3|3|1|1|1|1|RELU,BNORM,CONV|10|3|3|1|1|1|1|RELU,MAXPOOL|2|2|1|1,"
