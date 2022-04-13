@@ -238,6 +238,7 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 	bins.Write("bins");
 
 	tmvaFile->Close();
+	Info("createROOTFileForLearning", "File \"%s\" created", tmvaFileNamePath.Data());
 }
 
 void trainTMVA(const char *trainingFileURI, MLFileType rootFileType = MLFileType::Linear) {
