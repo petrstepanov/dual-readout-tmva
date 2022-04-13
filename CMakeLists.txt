@@ -7,7 +7,7 @@
   project(dual-readout-tmva)
 
 # Set the minimum required version of cmake for a project
-  cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+  cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
 # Locate the ROOT package and define a number of useful targets and variables (need RIO Net?)
   find_package(ROOT REQUIRED COMPONENTS)
