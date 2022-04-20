@@ -175,6 +175,7 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 
 	// Obtain "good" Cerenkov waveforms for TMVA
 	TList *goodCherHists = getGoodHistogramsList(cherWaveformsDirPath.Data());
+	Info("createROOTFileForLearning", "\"Good\" background histograms selected");
 
 	// Specify directory for Cerenkov AND Scintillation waveforms
 	TString cherScintWaveformsDirPath = cherScintPath;
@@ -183,8 +184,9 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 		cherScintWaveformsDirPath = FileUtils::getDirectoryPath();
 	}
 
-	// Obtain "good" Cerenkov waveforms for TMVA
+	// Obtain "good" Cerenkov and Scintillation waveforms for TMVA
 	TList *goodCherScintHists = getGoodHistogramsList(cherScintWaveformsDirPath.Data());
+	Info("createROOTFileForLearning", "\"Good\" signal histograms selected");
 
 	// TODO: Crop and invert histograms is required for the hist->GetRandom() to work?
 	TList *goodCherHistsPrepared = new TList();
@@ -193,6 +195,7 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 		TH1 *prepedHist = HistUtils::prepHistForTMVA(hist);
 		// goodCherHists->Remove(obj);
 		goodCherHistsPrepared->Add(prepedHist);
+		Info("createROOTFileForLearning", "\"Good\" background histograms processed (invert, crop)");
 	}
 	TList *goodCherScintHistsPrepared = new TList();
 	for (TObject *obj : *goodCherScintHists) {
@@ -200,6 +203,7 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 		TH1 *prepedHist = HistUtils::prepHistForTMVA(hist);
 		// goodCherScintHists->Remove(obj);
 		goodCherScintHistsPrepared->Add(prepedHist);
+		Info("createROOTFileForLearning", "\"Good\" signal histograms processed (invert, crop)");
 	}
 
 	// Prepare trees
@@ -207,7 +211,9 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 	TTree* treeSignal;
 	if (rootFileType == MLFileType::Linear){
 		treeBackground = HistUtils::histsToTreeLin(goodCherHistsPrepared, "treeB", "Background Tree - Cerenkov");
+		Info("createROOTFileForLearning", "Background Tree Created");
 		treeSignal = HistUtils::histsToTreeLin(goodCherScintHistsPrepared, "treeS", "Signal Tree - Cerenkov and scintillation");
+		Info("createROOTFileForLearning", "Signal Tree Created");
 	} else if (rootFileType == MLFileType::PDF){
 		treeBackground = HistUtils::histsToTree(goodCherHistsPrepared, "treeB", "Background Tree - Cerenkov");
 		treeSignal = HistUtils::histsToTree(goodCherScintHistsPrepared, "treeS", "Signal Tree - Cerenkov and scintillation");
@@ -349,18 +355,14 @@ void trainTMVA(const char *trainingFileURI, MLFileType rootFileType = MLFileType
 	if (!gROOT->IsBatch()) TMVA::TMVAGui(outputFileName);
 }
 
-void trainTMVA_CNN(const char *trainingFileURI){
-	   bool useTMVACNN = kFALSE; // (opt.size() > 0) ? opt[0] : false;
-	   bool useTMVADNN = kFALSE; //(opt.size() > 2) ? opt[2] : false;
-	   bool useTMVABDT = kTRUE; // (opt.size() > 3) ? opt[3] : false;
-	   bool usePyTorchCNN = kTRUE; //(opt.size() > 4) ? opt[4] : false;
-	#ifndef R__HAS_TMVACPU
-	#ifndef R__HAS_TMVAGPU
-	   Warning("TMVA_CNN_Classification",
-	           "TMVA is not build with GPU or CPU multi-thread support. Cannot use TMVA Deep Learning for CNN");
-	   useTMVACNN = false;
-	#endif
-	#endif
+void trainTMVA_CNN(const char *trainingFileURI, Bool_t useTMVACNN, Bool_t useTMVADNN, Bool_t useTMVABDT, Bool_t usePyTorchCNN){
+		#ifndef R__HAS_TMVACPU
+		#ifndef R__HAS_TMVAGPU
+		   Warning("TMVA_CNN_Classification",
+				   "TMVA is not build with GPU or CPU multi-thread support. Cannot use TMVA Deep Learning for CNN");
+		   useTMVACNN = false;
+		#endif
+		#endif
 
 	   bool writeOutputFile = true;
 
@@ -730,6 +732,10 @@ int main(int argc, char *argv[]) {
 	("w,weight", "Machine learning weight file path ('classify')", cxxopts::value<std::string>()) //
 	// ("t,test", "Directory path with .csv waveforms for classifying ('classify')", cxxopts::value<std::string>()) //
 	// ("g,gui", "Start with ROOT GUI", cxxopts::value<bool>()->default_value("false"))
+	("c,cnn",  "Use TMVA Convolutional Neural Network (CNN) for training", cxxopts::value<bool>()->default_value("false"))
+	("p,cnnp", "Use TMVA Convolutional PyTorch Model for training", cxxopts::value<bool>()->default_value("false"))
+	("d,dnn",  "Use TMVA Deep Neural Network (DNN) for training", cxxopts::value<bool>()->default_value("false"))
+	("d,bdt",  "Use TMVA Boosted Decision Trees (BDT) for training", cxxopts::value<bool>()->default_value("true"))
 	("h,help", "Print usage"); //
 
 	auto result = options.parse(app->Argc(), app->Argv());
@@ -753,7 +759,10 @@ int main(int argc, char *argv[]) {
 	std::string testDir;
 	// if (result.count("test"))
 	// testDir = result["test"].as<std::string>();
-	// bool gui = result["gui"].as<bool>();
+	bool cnn = result["cnn"].as<bool>();
+	bool cnnp = result["cnnp"].as<bool>();
+	bool dnn = result["dnn"].as<bool>();
+	bool bdt = result["bdt"].as<bool>();
 
 	if (mode == "prepare") {
 		// Step 1. Process CSV waveforms into a ROOT file with trees for learning
@@ -762,7 +771,7 @@ int main(int argc, char *argv[]) {
 		// Step 2. Learn ROOT TMVA to categorize the
 		std::vector<std::string> unmatched = result.unmatched();
 		// trainTMVA(unmatched[0].c_str());
-		trainTMVA_CNN(unmatched[0].c_str());
+		trainTMVA_CNN(unmatched[0].c_str(), cnn, dnn, bdt, cnnp);
 	} else if (mode == "classify") {
 		// Step 3. Use TMVA to categorize the
 		classifyWaveform_XY(weightFile.c_str(), testDir.c_str());
