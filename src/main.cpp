@@ -594,6 +594,7 @@ void trainTMVA_CNN(const char *trainingFileURI, Bool_t useTMVACNN, Bool_t useTMV
 	   ***/
 
 	   if (useTMVACNN) {
+		  // Fatal in <calculateDimension>: Not compatible hyper parameters for layer - (imageDim, filterDim, padding, stride) 1, 2, 0, 1
 
 	      TString inputLayoutString("InputLayout=1|1065");
 
