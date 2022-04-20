@@ -735,7 +735,7 @@ int main(int argc, char *argv[]) {
 	("c,cnn",  "Use TMVA Convolutional Neural Network (CNN) for training", cxxopts::value<bool>()->default_value("false"))
 	("p,cnnp", "Use TMVA Convolutional PyTorch Model for training", cxxopts::value<bool>()->default_value("false"))
 	("d,dnn",  "Use TMVA Deep Neural Network (DNN) for training", cxxopts::value<bool>()->default_value("false"))
-	("d,bdt",  "Use TMVA Boosted Decision Trees (BDT) for training", cxxopts::value<bool>()->default_value("true"))
+	("t,bdt",  "Use TMVA Boosted Decision Trees (BDT) for training", cxxopts::value<bool>()->default_value("true"))
 	("h,help", "Print usage"); //
 
 	auto result = options.parse(app->Argc(), app->Argv());
