@@ -1,5 +1,4 @@
 build/
-data/**/*.png
 data/**/*.root
 
 .project
