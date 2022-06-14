@@ -1,5 +1,5 @@
-#include "UiUtils.h"
-#include "HistUtils.h"
+#include "./UiUtils.h"
+#include "./HistUtils.h"
 
 #include <TGMsgBox.h>
 #include <TROOT.h>
@@ -100,7 +100,7 @@ void UiUtils::addCanvasTitle(TCanvas* canvas, const char* title, const char* sub
     Double_t height = childPad->GetAbsHNDC();
     Double_t width = childPad->GetAbsWNDC();
     childPad->SetPad(xLow, yLow*(1-titlePadHeightNDC), xLow+width, (yLow+height)*(1-titlePadHeightNDC));
-    canvas->Modified();
+    canvas->Modified(kTRUE);
     canvas->Update();
   }
 

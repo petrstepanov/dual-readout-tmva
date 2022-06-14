@@ -8,3 +8,4 @@ data/**/*.root
 dataset/**
 
 tmva*
+/_build/

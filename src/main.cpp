@@ -5,9 +5,11 @@
 #include <TCanvas.h>
 #include <TROOT.h>
 #include <TF1.h>
+#include <TH1.h>
 #include <TLeaf.h>
 #include <TVectorD.h>
 #include <TMacro.h>
+#include <TList.h>
 
 #include <TMVA/DataLoader.h>
 #include <TMVA/Factory.h>
@@ -16,10 +18,10 @@
 #include <TMVA/Tools.h>
 #include <TMVA/PyMethodBase.h>
 // #include "tinyfiledialogs.h"
-#include "FileUtils.h"
-#include "HistUtils.h"
-#include "StringUtils.h"
-#include "UiUtils.h"
+#include "./FileUtils.h"
+#include "./HistUtils.h"
+#include "./StringUtils.h"
+#include "./UiUtils.h"
 
 #include <iostream>
 #include "cxxopts.hpp"
@@ -42,7 +44,7 @@ TList* getGoodHistogramsList(const char *dirPath) {
 		TObjString *waveformCsvPath = (TObjString*) obj;
 
 		// Import CSV waveform into histogram
-		TH1 *hist = FileUtils::tekWaveformToHist(waveformCsvPath->String().Data());
+		TH1* hist = FileUtils::tekWaveformToHist(waveformCsvPath->String().Data());
 		if (!hist)
 			continue;
 
@@ -50,7 +52,8 @@ TList* getGoodHistogramsList(const char *dirPath) {
 		hists->Add(hist);
 
 		// Optionally: save waveforms as images
-		TString waveformImgPath = StringUtils::stripExtension(waveformCsvPath->String().Data());
+		TString waveformImgPath("");
+		waveformImgPath = StringUtils::stripExtension(waveformCsvPath->String().Data());
 		waveformImgPath += ".png";
 		// UiUtils::saveHistogramAsImage(hist, waveformImgPath.Data());
 	}
@@ -731,7 +734,7 @@ int main(int argc, char *argv[]) {
 	("b,background", "Directory path for background .csv waveforms ('prepare')", cxxopts::value<std::string>()) //
 	("s,signal", "Directory path for signal .csv waveforms ('prepare')", cxxopts::value<std::string>()) //
 	("w,weight", "Machine learning weight file path ('classify')", cxxopts::value<std::string>()) //
-	// ("t,test", "Directory path with .csv waveforms for classifying ('classify')", cxxopts::value<std::string>()) //
+	("t,test", "Directory path with .csv waveforms for classifying ('test')", cxxopts::value<std::string>()) //
 	// ("g,gui", "Start with ROOT GUI", cxxopts::value<bool>()->default_value("false"))
 	("c,cnn",  "Use TMVA Convolutional Neural Network (CNN) for training", cxxopts::value<bool>()->default_value("false"))
 	("p,cnnp", "Use TMVA Convolutional PyTorch Model for training", cxxopts::value<bool>()->default_value("false"))
@@ -758,8 +761,9 @@ int main(int argc, char *argv[]) {
 	if (result.count("weight"))
 		weightFile = result["weight"].as<std::string>();
 	std::string testDir;
-	// if (result.count("test"))
-	// testDir = result["test"].as<std::string>();
+	if (result.count("test"))
+		testDir = result["test"].as<std::string>();
+
 	bool cnn = result["cnn"].as<bool>();
 	bool cnnp = result["cnnp"].as<bool>();
 	bool dnn = result["dnn"].as<bool>();
