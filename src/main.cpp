@@ -217,13 +217,14 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 		Info("createROOTFileForLearning", "Background Tree Created");
 		treeSignal = HistUtils::histsToTreeLin(goodCherScintHistsPrepared, "treeS", "Signal Tree - Cerenkov and scintillation");
 		Info("createROOTFileForLearning", "Signal Tree Created");
-	} else if (rootFileType == MLFileType::PDF){
-		treeBackground = HistUtils::histsToTree(goodCherHistsPrepared, "treeB", "Background Tree - Cerenkov");
-		treeSignal = HistUtils::histsToTree(goodCherScintHistsPrepared, "treeS", "Signal Tree - Cerenkov and scintillation");
-	} else {
-		treeBackground = HistUtils::histsToTreeXY(goodCherHistsPrepared, "treeS", "Background Tree - Cerenkov");
-		treeSignal = HistUtils::histsToTreeXY(goodCherScintHistsPrepared, "treeB", "Signal Tree - Cerenkov and scintillation");
 	}
+//	else if (rootFileType == MLFileType::PDF){
+//		treeBackground = HistUtils::histsToTree(goodCherHistsPrepared, "treeB", "Background Tree - Cerenkov");
+//		treeSignal = HistUtils::histsToTree(goodCherScintHistsPrepared, "treeS", "Signal Tree - Cerenkov and scintillation");
+//	} else {
+//		treeBackground = HistUtils::histsToTreeXY(goodCherHistsPrepared, "treeS", "Background Tree - Cerenkov");
+//		treeSignal = HistUtils::histsToTreeXY(goodCherScintHistsPrepared, "treeB", "Signal Tree - Cerenkov and scintillation");
+//	}
 
 	// Write trees to file for training
 	TString workingDirectory = gSystem->GetWorkingDirectory().c_str();
@@ -359,6 +360,7 @@ void trainTMVA(const char *trainingFileURI, MLFileType rootFileType = MLFileType
 }
 
 void trainTMVA_CNN(const char *trainingFileURI, Bool_t useTMVACNN, Bool_t useTMVADNN, Bool_t useTMVABDT, Bool_t usePyTorchCNN){
+	// Petr Stepanov: refer to: https://root.cern/doc/master/TMVA__CNN__Classification_8C.html
 		#ifndef R__HAS_TMVACPU
 		#ifndef R__HAS_TMVAGPU
 		   Warning("TMVA_CNN_Classification",
@@ -681,44 +683,96 @@ void trainTMVA_CNN(const char *trainingFileURI, Bool_t useTMVACNN, Bool_t useTMV
 	   if (!gROOT->IsBatch()) TMVA::TMVAGui("TMVA_CNN_ClassificationOutput.root");
 }
 
-void classifyWaveform_XY(const char *weightFile, const char *testDir) {
-/*
-	// Taken from:
-	TMVA::Reader *reader = new TMVA::Reader("!Color:!Silent");
+void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath, Bool_t useTMVACNN, Bool_t useTMVADNN, Bool_t useTMVABDT, Bool_t usePyTorchCNN){
+	// Use GUI picker if 'testDirPath' command line parameter not passed
+	TString testWaveformsDirPath = testDirPath;
+	if (testWaveformsDirPath.Length() == 0) {
+		UiUtils::msgBoxInfo("Dual Readout TMVA", "Specify directory with waveforms to be tested");
+		testWaveformsDirPath = FileUtils::getDirectoryPath();
+	}
+	// Read "good" waveforms to be tested
+	TList* goodTestHists = getGoodHistogramsList(testWaveformsDirPath);
+
+	// TODO: Crop and invert histograms is required for the hist->GetRandom() to work?
+	TList *goodTestHistsPrepared = new TList();
+	for (TObject *obj : *goodTestHists) {
+		TH1 *hist = (TH1*) obj;
+		TH1 *prepedHist = HistUtils::prepHistForTMVA(hist);
+		// goodCherHists->Remove(obj);
+		goodTestHistsPrepared->Add(prepedHist);
+		Info("createROOTFileForLearning", "\"Good\" background histograms processed (invert, crop)");
+	}
+
+	// Remember number of bins in first good histogram
+	TH1* firstHist = (TH1*)goodTestHistsPrepared->At(0);
+	Int_t nBins = firstHist->GetNbinsX();
+
+	// Use GUI picker if 'testDirPath' command line parameter not passed
+	TString weightFilesDirPath = weightDirPath;
+	if (weightFilesDirPath.Length() == 0) {
+		UiUtils::msgBoxInfo("Dual Readout TMVA", "Specify directory with weight files");
+		weightFilesDirPath = FileUtils::getDirectoryPath();
+	}
 
 	// Create a set of variables and declare them to the reader
 	// - the variable names MUST corresponds in name and type to those given in the weight file(s) used
-	Float_t x, y;
-	reader->AddVariable("x", &x);
-	reader->AddVariable("y", &y);
+	std::vector<float> fValues(nBins);
 
-	// Spectator variables declared in the training have to be added to the reader, too
-	Float_t spec1, spec2;
-	reader->AddSpectator("spec1 := var1*2", &spec1);
-	reader->AddSpectator("spec2 := var1*3", &spec2);
-
-	Float_t Category_cat1, Category_cat2, Category_cat3;
-	if (Use["Category"]) {
-		// Add artificial spectators for distinguishing categories
-		reader->AddSpectator("Category_cat1 := var3<=0", &Category_cat1);
-		reader->AddSpectator("Category_cat2 := (var3>0)&&(var4<0)", &Category_cat2);
-		reader->AddSpectator("Category_cat3 := (var3>0)&&(var4>=0)", &Category_cat3);
-	}
+	// Instantiate the reader
+	// Taken from: https://root.cern/doc/master/TMVAClassificationApplication_8C.html
+	TMVA::Reader* reader = new TMVA::Reader("!Color:!Silent");
+    for (std::size_t i = 0; i < nBins; i++) {
+    	reader->AddVariable("vars", &fValues[i]);
+    }
 
 	// Book the MVA methods
-
-	TString dir = "dataset/weights/";
-	TString prefix = "TMVAClassification";
+	TString dir = weightDirPath;
+	TString prefix = "TMVA_CNN_Classification_";
 
 	// Book method(s)
+	std::map<std::string, int> Use {{"BDT", 1}, {"DNN_CPU", 1}};
 	for (std::map<std::string, int>::iterator it = Use.begin(); it != Use.end(); it++) {
 		if (it->second) {
 			TString methodName = TString(it->first) + TString(" method");
-			TString weightfile = dir + prefix + TString("_") + TString(it->first) + TString(".weights.xml");
+			TString weightfile = dir + prefix + TString(it->first) + TString(".weights.xml");
 			reader->BookMVA(methodName, weightfile);
 		}
 	}
-*/
+
+	// Book Output histograms
+	// https://root.cern/doc/master/TMVAClassificationApplication_8C.html
+	UInt_t nbin = 100;
+	TH1F *histBdtF(0);
+	TH1F *histDnnCpu(0);
+	histBdtF = new TH1F("MVA_BDTF", "MVA_BDTF", nbin, -1.0, 1.0 );
+	histDnnCpu = new TH1F("MVA_DNN_CPU", "MVA_DNN_CPU", nbin, -0.1, 1.1);
+
+	// Prepare input tree (this must be replaced by your data source)
+	// in this example, there is a toy tree with signal and one with background events
+	// we'll later on use only the "signal" events for the test in this example.
+
+	// Prepare trees
+	TTree* treeTest;
+	// if (rootFileType == MLFileType::Linear){
+	treeTest = HistUtils::histsToTreeLin(goodTestHistsPrepared, "tree", "Tree for Classification");
+	Info("classifyWaveform_Linear", "Test Tree Created");
+	// }
+
+	histBdtF->Fill( reader->EvaluateMVA("BDTF method" ));
+	histDnnCpu->Fill(reader->EvaluateMVA("DNN_CPU method"));
+
+	// Write histograms
+	TFile *target  = new TFile( "TMVApp.root","RECREATE" );
+	histBdtF->Write();
+	histDnnCpu->Write();
+
+	target->Close();
+
+	std::cout << "--- Created root file: \"TMVApp.root\" containing the MVA output histograms" << std::endl;
+
+	delete reader;
+
+	std::cout << "==> TMVAClassificationApplication is done!" << std::endl << std::endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -757,12 +811,12 @@ int main(int argc, char *argv[]) {
 	std::string signalDir;
 	if (result.count("signal"))
 		signalDir = result["signal"].as<std::string>();
-	std::string weightFile;
+	std::string weightDirPath;
 	if (result.count("weight"))
-		weightFile = result["weight"].as<std::string>();
-	std::string testDir;
+		weightDirPath = result["weight"].as<std::string>();
+	std::string testDirPath;
 	if (result.count("test"))
-		testDir = result["test"].as<std::string>();
+		testDirPath = result["test"].as<std::string>();
 
 	bool cnn = result["cnn"].as<bool>();
 	bool cnnpt = result["cnnpt"].as<bool>();
@@ -781,11 +835,10 @@ int main(int argc, char *argv[]) {
 		// View training output
 		std::vector<std::string> unmatched = result.unmatched();
 		// trainTMVA(unmatched[0].c_str());
-		std::cout << "Unmatched: " << unmatched[0].c_str() << std::endl;
 		TMVA::TMVAGui(unmatched[0].c_str());
 	} else if (mode == "classify") {
 		// Step 3. Use TMVA to categorize the
-		classifyWaveform_XY(weightFile.c_str(), testDir.c_str());
+		classifyWaveform_XY(weightDirPath.c_str(), testDirPath.c_str(), cnn, dnn, bdt, cnnpt);
 	}
 
 	// Enter the event loop
