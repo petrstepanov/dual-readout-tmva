@@ -730,17 +730,17 @@ int main(int argc, char *argv[]) {
 	cxxopts::Options options("Dual Readout TMVA", "ROOT Machine Learning (ML) approach to categorize waveforms upon their shape.");
 
 	// Add command-line options
-	options.allow_unrecognised_options().add_options()("m,mode", "Program mode ('prepare', 'train', 'classify')", cxxopts::value<std::string>()) //
-	("b,background", "Directory path for background .csv waveforms ('prepare')", cxxopts::value<std::string>()) //
-	("s,signal", "Directory path for signal .csv waveforms ('prepare')", cxxopts::value<std::string>()) //
-	("w,weight", "Machine learning weight file path ('classify')", cxxopts::value<std::string>()) //
-	("t,test", "Directory path with .csv waveforms for classifying ('test')", cxxopts::value<std::string>()) //
+	options.allow_unrecognised_options().add_options()("mode", "Program mode ('prepare', 'train', 'classify')", cxxopts::value<std::string>()) //
+	("background", "Directory path for background .csv waveforms ('prepare')", cxxopts::value<std::string>()) //
+	("signal", "Directory path for signal .csv waveforms ('prepare')", cxxopts::value<std::string>()) //
+	("weight", "Machine learning weight file path ('classify')", cxxopts::value<std::string>()) //
+	("test", "Directory path with .csv waveforms for classifying ('test')", cxxopts::value<std::string>()) //
 	// ("g,gui", "Start with ROOT GUI", cxxopts::value<bool>()->default_value("false"))
-	("c,cnn",  "Use TMVA Convolutional Neural Network (CNN) for training", cxxopts::value<bool>()->default_value("false"))
-	("p,cnnp", "Use TMVA Convolutional PyTorch Model for training", cxxopts::value<bool>()->default_value("false"))
-	("d,dnn",  "Use TMVA Deep Neural Network (DNN) for training", cxxopts::value<bool>()->default_value("false"))
-	("t,bdt",  "Use TMVA Boosted Decision Trees (BDT) for training", cxxopts::value<bool>()->default_value("true"))
-	("h,help", "Print usage"); //
+	("cnn",  "Use TMVA Convolutional Neural Network (CNN) for training", cxxopts::value<bool>()->default_value("false"))
+	("cnnpt", "Use TMVA Convolutional PyTorch Model for training", cxxopts::value<bool>()->default_value("false"))
+	("dnn",  "Use TMVA Deep Neural Network (DNN) for training", cxxopts::value<bool>()->default_value("false"))
+	("bdt",  "Use TMVA Boosted Decision Trees (BDT) for training", cxxopts::value<bool>()->default_value("true"))
+	("help", "Print usage"); //
 
 	auto result = options.parse(app->Argc(), app->Argv());
 
@@ -765,7 +765,7 @@ int main(int argc, char *argv[]) {
 		testDir = result["test"].as<std::string>();
 
 	bool cnn = result["cnn"].as<bool>();
-	bool cnnp = result["cnnp"].as<bool>();
+	bool cnnpt = result["cnnpt"].as<bool>();
 	bool dnn = result["dnn"].as<bool>();
 	bool bdt = result["bdt"].as<bool>();
 
@@ -776,7 +776,7 @@ int main(int argc, char *argv[]) {
 		// Step 2. Learn ROOT TMVA to categorize the
 		std::vector<std::string> unmatched = result.unmatched();
 		// trainTMVA(unmatched[0].c_str());
-		trainTMVA_CNN(unmatched[0].c_str(), cnn, dnn, bdt, cnnp);
+		trainTMVA_CNN(unmatched[0].c_str(), cnn, dnn, bdt, cnnpt);
 	} else if (mode == "classify") {
 		// Step 3. Use TMVA to categorize the
 		classifyWaveform_XY(weightFile.c_str(), testDir.c_str());
