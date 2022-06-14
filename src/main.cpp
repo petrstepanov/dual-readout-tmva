@@ -730,7 +730,7 @@ int main(int argc, char *argv[]) {
 	cxxopts::Options options("Dual Readout TMVA", "ROOT Machine Learning (ML) approach to categorize waveforms upon their shape.");
 
 	// Add command-line options
-	options.allow_unrecognised_options().add_options()("mode", "Program mode ('prepare', 'train', 'classify')", cxxopts::value<std::string>()) //
+	options.allow_unrecognised_options().add_options()("mode", "Program mode ('prepare', 'train', 'tmva-gui', 'classify')", cxxopts::value<std::string>()) //
 	("background", "Directory path for background .csv waveforms ('prepare')", cxxopts::value<std::string>()) //
 	("signal", "Directory path for signal .csv waveforms ('prepare')", cxxopts::value<std::string>()) //
 	("weight", "Machine learning weight file path ('classify')", cxxopts::value<std::string>()) //
@@ -777,6 +777,12 @@ int main(int argc, char *argv[]) {
 		std::vector<std::string> unmatched = result.unmatched();
 		// trainTMVA(unmatched[0].c_str());
 		trainTMVA_CNN(unmatched[0].c_str(), cnn, dnn, bdt, cnnpt);
+	} else if (mode == "tmva-gui") {
+		// View training output
+		std::vector<std::string> unmatched = result.unmatched();
+		// trainTMVA(unmatched[0].c_str());
+		std::cout << "Unmatched: " << unmatched[0].c_str() << std::endl;
+		TMVA::TMVAGui(unmatched[0].c_str());
 	} else if (mode == "classify") {
 		// Step 3. Use TMVA to categorize the
 		classifyWaveform_XY(weightFile.c_str(), testDir.c_str());
