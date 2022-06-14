@@ -722,6 +722,7 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath,
 	// Taken from: https://root.cern/doc/master/TMVAClassificationApplication_8C.html
 	TMVA::Reader* reader = new TMVA::Reader("!Color:!Silent");
     for (std::size_t i = 0; i < nBins; i++) {
+    	// Petr Stepanov: this taken from RReader.hxx, ROOT sources
     	reader->AddVariable("vars", &fValues[i]);
     }
 
@@ -730,6 +731,7 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath,
 	TString prefix = "TMVA_CNN_Classification_";
 
 	// Book method(s)
+	// TODO: consolidate methods and their names in some data structure?
 	std::map<std::string, int> Use {{"BDT", 1}, {"DNN_CPU", 1}};
 	for (std::map<std::string, int>::iterator it = Use.begin(); it != Use.end(); it++) {
 		if (it->second) {
