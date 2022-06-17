@@ -257,6 +257,7 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 	gApplication->Terminate(0);
 }
 
+/*
 void trainTMVA(const char *trainingFileURI, MLFileType rootFileType = MLFileType::Linear) {
 	// Enable ROOT Multi-Threading
 	TMVA::Tools::Instance();
@@ -364,28 +365,26 @@ void trainTMVA(const char *trainingFileURI, MLFileType rootFileType = MLFileType
 	// Launch the GUI for the root macros
 	if (!gROOT->IsBatch()) TMVA::TMVAGui(outputFileName);
 }
+*/
 
 void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmvaMethodOnly){
 	// Petr Stepanov: refer to: https://root.cern/doc/master/TMVA__CNN__Classification_8C.html
-	   bool writeOutputFile = true;
 
-	   int num_threads = 0;  // use default threads
+		int num_threads = 0;  // use default threads
+		TMVA::Tools::Instance();
+		// Enable MT running
+		if (num_threads >= 0) {
+		  ROOT::EnableImplicitMT(num_threads);
+		  if (num_threads > 0) gSystem->Setenv("OMP_NUM_THREADS", TString::Format("%d",num_threads));
+		}
+		else {
+		  gSystem->Setenv("OMP_NUM_THREADS", "1");
+		}
+		std::cout << "Running with nthreads  = " << ROOT::GetThreadPoolSize() << std::endl;
 
-	   TMVA::Tools::Instance();
-
-	   // do enable MT running
-	   if (num_threads >= 0) {
-	      ROOT::EnableImplicitMT(num_threads);
-	      if (num_threads > 0) gSystem->Setenv("OMP_NUM_THREADS", TString::Format("%d",num_threads));
-	   }
-	   else
-	      gSystem->Setenv("OMP_NUM_THREADS", "1");
-
-	   std::cout << "Running with nthreads  = " << ROOT::GetThreadPoolSize() << std::endl;
-
-	   TFile *outputFile = nullptr;
-	   if (writeOutputFile)
-	      outputFile = TFile::Open("TMVA_CNN_ClassificationOutput.root", "RECREATE");
+		// Open output file
+		TFile *outputFile = nullptr;
+		outputFile = TFile::Open("TMVA_CNN_ClassificationOutput.root", "RECREATE");
 
 	   /***
 	       ## Create TMVA Factory
@@ -745,7 +744,8 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 	// }
 
 	// Read tree
-	treeTest->SetBranchAddress("vars", &fValues[0]);
+	std::vector<float>* fValuesPtr = &fValues;
+	treeTest->SetBranchAddress("vars", fValuesPtr);
 	Long64_t nEntries = treeTest->GetEntries();
 	for (Long64_t ievt=0; ievt < nEntries; ievt++) {
 		treeTest->GetEntry(ievt);
@@ -878,8 +878,8 @@ int main(int argc, char *argv[]) {
 		if (unmatched.size() == 0){
 			// Use GUI picker if 'testDirPath' command line parameter not passed
 			UiUtils::msgBoxInfo("Dual Readout TMVA", "Specify ROOT training result file");
-			TString weightDirPath = UiUtils::getFilePath();
-			unmatched.push_back(weightDirPath.Data());
+			TString filePath = UiUtils::getFilePath();
+			unmatched.push_back(filePath.Data());
 		}
 		TMVA::TMVAGui(unmatched[0].c_str());
 	} else if (mode == "classify") {
