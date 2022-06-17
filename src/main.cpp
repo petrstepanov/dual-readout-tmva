@@ -438,7 +438,7 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
 		// Open teaching ROOT file and extract signal and backgroud trees
 		TFile *inputFile = TFile::Open(trainingFileURI);
 		if (!inputFile) {
-			Error("TMVA_CNN_Classification", "Input file %s not found", trainingFileURI);
+			Error("trainTMVA_CNN", "Input file %s not found", trainingFileURI);
 			exit(1);
 		}
 
@@ -515,7 +515,8 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
 
 	   // Boosted Decision Trees
 	   if (tmvaMethodOnly.size() == 0 || tmvaMethodOnly.count(TMVA::Types::kBDT)) {
-	      factory.BookMethod(loader, TMVA::Types::kBDT, "BDT",
+		  TString methodTitle = TMVA::Types::Instance().GetMethodName(TMVA::Types::kBDT);
+	      factory.BookMethod(loader, TMVA::Types::kBDT, methodTitle,
 	                         "!V:NTrees=400:MinNodeSize=2.5%:MaxDepth=2:BoostType=AdaBoost:AdaBoostBeta=0.5:"
 	                         "UseBaggedBoost:BaggedSampleFraction=0.5:SeparationType=GiniIndex:nCuts=20");
 	   }
@@ -561,7 +562,7 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
 	      dnnOptions.Append(":");
 	      dnnOptions.Append(trainingStrategyString);
 
-	      TString dnnMethodName = TMVA::Types::Instance().GetMethodName(TMVA::Types::kDNN);
+	      TString methodTitle = TMVA::Types::Instance().GetMethodName(TMVA::Types::kDNN);
 		// use GPU if available
 		#ifdef R__HAS_TMVAGPU
 			  dnnOptions += ":Architecture=GPU";
@@ -571,7 +572,7 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
 			  // dnnMethodName += "_CPU";
 		#endif
 
-	      factory.BookMethod(loader, TMVA::Types::kDL, dnnMethodName, dnnOptions);
+	      factory.BookMethod(loader, TMVA::Types::kDL, methodTitle, dnnOptions);
 	   }
 
 	   /***
