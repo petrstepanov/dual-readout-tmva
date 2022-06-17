@@ -743,7 +743,7 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 	Info("classifyWaveform_Linear", "Test Tree Created");
 	// }
 
-	// Read tree
+	// Read test tree
 	std::vector<float> fV(nBins);
 	std::vector<float>* fVPtr = &fV;
 	treeTest->SetBranchAddress("vars", fVPtr);
@@ -761,11 +761,11 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 			TString spectrumName = "";
 			TObject* obj = goodTestHistsPrepared->At(ievt);
 			TH1* spectrumHist = (TH1*) obj;
-			if (spectrumHist) spectrumHist->GetName();
+			if (spectrumHist) spectrumName = spectrumHist->GetName();
 
 			// Output to screen
 			std::cout << "Entry: " << ievt << std::endl;
-			std::cout << "Filename: " << spectrumHist << std::endl;
+			std::cout << "Filename: " << spectrumName << std::endl;
 			std::cout << "MVA response: " << val << std::endl << std::endl;
 		}
 
