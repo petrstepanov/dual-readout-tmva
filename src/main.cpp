@@ -253,6 +253,7 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 
 	tmvaFile->Close();
 	Info("createROOTFileForLearning", "File \"%s\" created", tmvaFileNamePath.Data());
+	gApplication->Terminate(0);
 }
 
 void trainTMVA(const char *trainingFileURI, MLFileType rootFileType = MLFileType::Linear) {
@@ -643,6 +644,9 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
 		if (!gROOT->IsBatch()){
 			TMVA::TMVAGui("TMVA_ClassificationOutput.root");
 		}
+
+		Info("trainTMVA_CNN", "Training completed");
+		gApplication->Terminate(0);
 }
 
 void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath){
@@ -794,7 +798,8 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 
 	delete reader;
 
-	std::cout << "==> TMVAClassificationApplication is done!" << std::endl << std::endl;
+	Info("classifyWaveform_Linear", "Classification completed");
+	gApplication->Terminate(0);
 }
 
 int main(int argc, char *argv[]) {
