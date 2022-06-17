@@ -10,7 +10,10 @@
 #include <TVectorD.h>
 #include <TMacro.h>
 #include <TList.h>
+#include <TROOT.h>
+#include <TObjString.h>
 
+#include <TMVA/Types.h>
 #include <TMVA/DataLoader.h>
 #include <TMVA/Factory.h>
 #include <TMVA/TMVAGui.h>
@@ -24,6 +27,7 @@
 #include "./UiUtils.h"
 
 #include <iostream>
+#include <set>
 #include "cxxopts.hpp"
 
 #define N_BINS 10000
@@ -359,16 +363,8 @@ void trainTMVA(const char *trainingFileURI, MLFileType rootFileType = MLFileType
 	if (!gROOT->IsBatch()) TMVA::TMVAGui(outputFileName);
 }
 
-void trainTMVA_CNN(const char *trainingFileURI, Bool_t useTMVACNN, Bool_t useTMVADNN, Bool_t useTMVABDT, Bool_t usePyTorchCNN){
+void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmvaMethodOnly){
 	// Petr Stepanov: refer to: https://root.cern/doc/master/TMVA__CNN__Classification_8C.html
-		#ifndef R__HAS_TMVACPU
-		#ifndef R__HAS_TMVAGPU
-		   Warning("TMVA_CNN_Classification",
-				   "TMVA is not build with GPU or CPU multi-thread support. Cannot use TMVA Deep Learning for CNN");
-		   useTMVACNN = false;
-		#endif
-		#endif
-
 	   bool writeOutputFile = true;
 
 	   int num_threads = 0;  // use default threads
@@ -486,8 +482,8 @@ void trainTMVA_CNN(const char *trainingFileURI, Bool_t useTMVACNN, Bool_t useTMV
 	   // It is possible also to specify the number of training and testing events,
 	   // note we disable the computation of the correlation matrix of the input variables
 
-	   int nTrainSig = 0.8 * nEventsSig;
-	   int nTrainBkg = 0.8 * nEventsBkg;
+	   int nTrainSig = 1 * nEventsSig;
+	   int nTrainBkg = 1 * nEventsBkg;
 
 	   // build the string options for DataLoader::PrepareTrainingAndTestTree
 	   TString prepareOptions = TString::Format(
@@ -517,7 +513,7 @@ void trainTMVA_CNN(const char *trainingFileURI, Bool_t useTMVACNN, Bool_t useTMV
 	   **/
 
 	   // Boosted Decision Trees
-	   if (useTMVABDT) {
+	   if (tmvaMethodOnly.size() == 0 || tmvaMethodOnly.count(TMVA::Types::kBDT)) {
 	      factory.BookMethod(loader, TMVA::Types::kBDT, "BDT",
 	                         "!V:NTrees=400:MinNodeSize=2.5%:MaxDepth=2:BoostType=AdaBoost:AdaBoostBeta=0.5:"
 	                         "UseBaggedBoost:BaggedSampleFraction=0.5:SeparationType=GiniIndex:nCuts=20");
@@ -531,7 +527,15 @@ void trainTMVA_CNN(const char *trainingFileURI, Bool_t useTMVACNN, Bool_t useTMV
 
 	   **/
 
-	   if (useTMVADNN) {
+		// Check if ROOT is built with TMVA CNN CPU or GPU support
+		#ifndef R__HAS_TMVACPU
+		#ifndef R__HAS_TMVAGPU
+			Warning("trainTMVA_CNN", "TMVA is not build with GPU or CPU multi-thread support. Cannot use TMVA Deep Learning for Convolutional Neural Network (CNN)");
+			tmvaMethodOnly.erase(TMVA::Types::kDNN);
+		#endif
+		#endif
+
+	   if (tmvaMethodOnly.size() == 0 || tmvaMethodOnly.count(TMVA::Types::kDNN)) {
 
 	      TString layoutString(
 	         "Layout=DENSE|100|RELU,BNORM,DENSE|100|RELU,BNORM,DENSE|100|RELU,BNORM,DENSE|100|RELU,DENSE|1|LINEAR");
@@ -556,14 +560,15 @@ void trainTMVA_CNN(const char *trainingFileURI, Bool_t useTMVACNN, Bool_t useTMV
 	      dnnOptions.Append(":");
 	      dnnOptions.Append(trainingStrategyString);
 
-	      TString dnnMethodName = "TMVA_DNN_CPU";
-	// use GPU if available
-	#ifdef R__HAS_TMVAGPU
-	      dnnOptions += ":Architecture=GPU";
-	      dnnMethodName = "TMVA_DNN_GPU";
-	#elif defined(R__HAS_TMVACPU)
-	      dnnOptions += ":Architecture=CPU";
-	#endif
+	      TString dnnMethodName = TMVA::Types::Instance().GetMethodName(TMVA::Types::kDNN);
+		// use GPU if available
+		#ifdef R__HAS_TMVAGPU
+			  dnnOptions += ":Architecture=GPU";
+			  // dnnMethodName += "_GPU";
+		#elif defined(R__HAS_TMVACPU)
+			  dnnOptions += ":Architecture=CPU";
+			  // dnnMethodName += "_CPU";
+		#endif
 
 	      factory.BookMethod(loader, TMVA::Types::kDL, dnnMethodName, dnnOptions);
 	   }
@@ -598,51 +603,8 @@ void trainTMVA_CNN(const char *trainingFileURI, Bool_t useTMVACNN, Bool_t useTMV
 
 	   ***/
 
-	   if (useTMVACNN) {
-		  // Fatal in <calculateDimension>: Not compatible hyper parameters for layer - (imageDim, filterDim, padding, stride) 1, 2, 0, 1
-
-	      TString inputLayoutString("InputLayout=1|1065");
-
-	      // Batch Layout
-	      TString layoutString("Layout=CONV|10|3|3|1|1|1|1|RELU,BNORM,CONV|10|3|3|1|1|1|1|RELU,MAXPOOL|2|2|1|1,"
-	                           "RESHAPE|FLAT,DENSE|100|RELU,DENSE|1|LINEAR");
-
-	      // Training strategies.
-	      TString trainingString1("LearningRate=1e-3,Momentum=0.9,Repetitions=1,"
-	                              "ConvergenceSteps=5,BatchSize=100,TestRepetitions=1,"
-	                              "MaxEpochs=20,WeightDecay=1e-4,Regularization=None,"
-	                              "Optimizer=ADAM,DropConfig=0.0+0.0+0.0+0.0");
-
-	      TString trainingStrategyString("TrainingStrategy=");
-	      trainingStrategyString +=
-	         trainingString1; // + "|" + trainingString2 + "|" + trainingString3; for concatenating more training strings
-
-	      // Build full CNN Options.
-	      TString cnnOptions("!H:V:ErrorStrategy=CROSSENTROPY:VarTransform=None:"
-	                         "WeightInitialization=XAVIER");
-
-	      cnnOptions.Append(":");
-	      cnnOptions.Append(inputLayoutString);
-	      cnnOptions.Append(":");
-	      cnnOptions.Append(layoutString);
-	      cnnOptions.Append(":");
-	      cnnOptions.Append(trainingStrategyString);
-
-	      //// New DL (CNN)
-	      TString cnnMethodName = "TMVA_CNN_CPU";
-	// use GPU if available
-	#ifdef R__HAS_TMVAGPU
-	      cnnOptions += ":Architecture=GPU";
-	      cnnMethodName = "TMVA_CNN_GPU";
-	#else
-	      cnnOptions += ":Architecture=CPU";
-	      cnnMethodName = "TMVA_CNN_CPU";
-	#endif
-
-	      factory.BookMethod(loader, TMVA::Types::kDL, cnnMethodName, cnnOptions);
-	   }
-
-	   if (usePyTorchCNN) {
+	   /*
+	   if (Use.count(TMVA::Types::kPyTorch)) {
 
 	      Info("TMVA_CNN_Classification", "Using Convolutional PyTorch Model");
 	      TString pyTorchFileName = gROOT->GetTutorialDir() + TString("/tmva/PyTorch_Generate_CNN_Model.py");
@@ -659,31 +621,31 @@ void trainTMVA_CNN(const char *trainingFileURI, Bool_t useTMVACNN, Bool_t useTMV
 	         factory.BookMethod(loader, TMVA::Types::kPyTorch, "PyTorch", methodOpt);
 	      }
 	   }
+	*/
 
+		// Train Methods
+		factory.TrainAllMethods();
 
-	   ////  ## Train Methods
+		// Test and Evaluate Methods
+		factory.TestAllMethods();
+		factory.EvaluateAllMethods();
 
-	   factory.TrainAllMethods();
+		// Plot ROC Curve
+		if (!gROOT->IsBatch()){
+		   TCanvas* canvas = factory.GetROCCurve(loader);
+		   canvas->Draw();
+		}
 
-	   /// ## Test and Evaluate Methods
+		// Close output file
+		outputFile->Close();
 
-	   factory.TestAllMethods();
-
-	   factory.EvaluateAllMethods();
-
-	   /// ## Plot ROC Curve
-
-	   auto c1 = factory.GetROCCurve(loader);
-	   c1->Draw();
-
-	   // close outputfile to save output file
-	   outputFile->Close();
-
-	   // Launch the GUI for the root macros
-	   if (!gROOT->IsBatch()) TMVA::TMVAGui("TMVA_CNN_ClassificationOutput.root");
+		// Launch the GUI for the root macros
+		if (!gROOT->IsBatch()){
+			TMVA::TMVAGui("TMVA_ClassificationOutput.root");
+		}
 }
 
-void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath, Bool_t useTMVACNN, Bool_t useTMVADNN, Bool_t useTMVABDT, Bool_t usePyTorchCNN){
+void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath){
 	// Use GUI picker if 'testDirPath' command line parameter not passed
 	TString testWaveformsDirPath = testDirPath;
 	if (testWaveformsDirPath.Length() == 0) {
@@ -728,26 +690,55 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath,
 
 	// Book the MVA methods
 	TString dir = weightDirPath;
-	TString prefix = "TMVA_CNN_Classification_";
+	// TString prefix = "TMVA_CNN_Classification_";
 
 	// Book method(s)
-	// TODO: consolidate methods and their names in some data structure?
-	std::map<std::string, int> Use {{"BDT", 1}, {"DNN_CPU", 1}};
-	for (std::map<std::string, int>::iterator it = Use.begin(); it != Use.end(); it++) {
-		if (it->second) {
-			TString methodName = TString(it->first) + TString(" method");
-			TString weightfile = dir + prefix + TString(it->first) + TString(".weights.xml");
-			reader->BookMVA(methodName, weightfile);
+	// Search
+	// std::map<std::string, int> Use {{"BDT", 1}, {"DNN_CPU", 1}};
+	// std::set<TMVA::Types::EMVA> foundMethods {};
+
+	// Loop through all weight files in given weight directory
+	TList* fileNames = FileUtils::getFilePathsInDirectory(weightDirPath, ".xml");
+	std::list<TH1F*> histograms {};
+	for (TObject* obj : *fileNames){
+		TObjString* fileNameObjString = (TObjString*) obj;
+		if (fileNameObjString){
+			TString filePath = fileNameObjString->GetString();
+			TString methodType = FileUtils::getFileNameNoExtensionFromPath(filePath);
+
+			// Book TMVA method in the reader
+			reader->BookMVA(methodType, filePath);
+
+			// Prepare output histogram
+			TH1F* hist = new TH1F(methodType, methodType, 100, -1.0, 1.0 );
+			histograms.push_back(hist);
 		}
 	}
 
+
+//	for (std::set<std::string, Bool_t>::iterator it = Use.begin(); it != Use.end(); it++) {
+//		if (it->second) {
+//			TString methodName = TString(it->first) + TString(" method");
+//			TString weightfile = dir + prefix + TString(it->first) + TString(".weights.xml");
+//
+//		}
+//	}
+
 	// Book Output histograms
 	// https://root.cern/doc/master/TMVAClassificationApplication_8C.html
-	UInt_t nbin = 100;
-	TH1F *histBdtF(0);
-	TH1F *histDnnCpu(0);
-	histBdtF = new TH1F("MVA_BDTF", "MVA_BDTF", nbin, -1.0, 1.0 );
-	histDnnCpu = new TH1F("MVA_DNN_CPU", "MVA_DNN_CPU", nbin, -0.1, 1.1);
+//	for (TObject* obj : *fileNames){
+//		TObjString* fileNameObjString = (TObjString*) obj;
+//		if (fileNameObjString){
+//			TString filePath = fileNameObjString->GetString();
+//			TString methodType = FileUtils::getFileNameNoExtensionFromPath(filePath);
+//			reader->BookMVA(methodType, filePath);
+//		}
+//	}
+//
+//	TH1F *histBdtF(0);
+//	TH1F *histDnnCpu(0);
+//	histBdtF = new TH1F("MVA_BDT", "MVA_BDT", nbin, -1.0, 1.0 );
+//	histDnnCpu = new TH1F("MVA_DNN_CPU", "MVA_DNN_CPU", nbin, -0.1, 1.1);
 
 	// Prepare input tree (this must be replaced by your data source)
 	// in this example, there is a toy tree with signal and one with background events
@@ -760,13 +751,42 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath,
 	Info("classifyWaveform_Linear", "Test Tree Created");
 	// }
 
-	histBdtF->Fill( reader->EvaluateMVA("BDTF method" ));
-	histDnnCpu->Fill(reader->EvaluateMVA("DNN_CPU method"));
+	// Read tree
+	treeTest->SetBranchAddress("vars", &fValues[0]);
+	Long64_t nEntries = treeTest->GetEntries();
+	for (Long64_t ievt=0; ievt < nEntries; ievt++) {
+		treeTest->GetEntry(ievt);
+
+		for (TH1F* hist : histograms){
+			// Get response from MVA - passing method name (here - hist name)
+			Double_t val = reader->EvaluateMVA( hist->GetName() );
+			// Fill histogram with responce
+			hist->Fill( val );
+
+			// Get spectrunm name
+			TString spectrumName = "";
+			TObject* obj = goodTestHistsPrepared->At(ievt);
+			TH1* spectrumHist = (TH1*) obj;
+			if (spectrumHist) spectrumHist->GetName();
+
+			// Output to screen
+			std::cout << "Entry: " << ievt << std::endl;
+			std::cout << "Filename: " << spectrumHist << std::endl;
+			std::cout << "MVA response: " << val << std::endl << std::endl;
+		}
+
+	}
+
+//	histBdtF->Fill( reader->EvaluateMVA("BDT method" ));
+//	histDnnCpu->Fill(reader->EvaluateMVA("DNN_CPU method"));
 
 	// Write histograms
 	TFile *target  = new TFile( "TMVApp.root","RECREATE" );
-	histBdtF->Write();
-	histDnnCpu->Write();
+	for (TH1F* hist : histograms){
+		hist->Write();
+	}
+//	histBdtF->Write();
+//	histDnnCpu->Write();
 
 	target->Close();
 
@@ -786,16 +806,16 @@ int main(int argc, char *argv[]) {
 	cxxopts::Options options("Dual Readout TMVA", "ROOT Machine Learning (ML) approach to categorize waveforms upon their shape.");
 
 	// Add command-line options
-	options.allow_unrecognised_options().add_options()("mode", "Program mode ('prepare', 'train', 'tmva-gui', 'classify')", cxxopts::value<std::string>()) //
+ 	options.allow_unrecognised_options().add_options()("mode", "Program mode ('prepare', 'train', 'tmva-gui', 'classify')", cxxopts::value<std::string>()) //
 	("background", "Directory path for background .csv waveforms ('prepare')", cxxopts::value<std::string>()) //
 	("signal", "Directory path for signal .csv waveforms ('prepare')", cxxopts::value<std::string>()) //
 	("weight", "Machine learning weight file path ('classify')", cxxopts::value<std::string>()) //
 	("test", "Directory path with .csv waveforms for classifying ('test')", cxxopts::value<std::string>()) //
 	// ("g,gui", "Start with ROOT GUI", cxxopts::value<bool>()->default_value("false"))
-	("cnn",  "Use TMVA Convolutional Neural Network (CNN) for training", cxxopts::value<bool>()->default_value("false"))
-	("cnnpt", "Use TMVA Convolutional PyTorch Model for training", cxxopts::value<bool>()->default_value("false"))
-	("dnn",  "Use TMVA Deep Neural Network (DNN) for training", cxxopts::value<bool>()->default_value("false"))
-	("bdt",  "Use TMVA Boosted Decision Trees (BDT) for training", cxxopts::value<bool>()->default_value("true"))
+	// ("cnn",  "Use TMVA Convolutional Neural Network (CNN) for training", cxxopts::value<bool>()->default_value("false"))
+	// ("cnnp", "Use TMVA Convolutional PyTorch Model for training", cxxopts::value<bool>()->default_value("false"))
+	("bdt",  "Use only Boosted Decision Trees (BDT) for training", cxxopts::value<bool>()->default_value("true"))
+	("dnn",  "Use only Deep Neural Network (DNN) for training", cxxopts::value<bool>()->default_value("false"))
 	("help", "Print usage"); //
 
 	auto result = options.parse(app->Argc(), app->Argv());
@@ -820,10 +840,15 @@ int main(int argc, char *argv[]) {
 	if (result.count("test"))
 		testDirPath = result["test"].as<std::string>();
 
-	bool cnn = result["cnn"].as<bool>();
-	bool cnnpt = result["cnnpt"].as<bool>();
-	bool dnn = result["dnn"].as<bool>();
-	bool bdt = result["bdt"].as<bool>();
+	// By default, training is performed for all possible methods (currently implemented kBDT and kDNN)
+	// However, user can specify only certain training methods in particular via command-line parameters
+	std::set<TMVA::Types::EMVA> tmvaMethodsOnly {};
+	if (result["bdt"].as<bool>()){
+		tmvaMethodsOnly.insert(TMVA::Types::EMVA::kBDT);
+	}
+	if (result["dnn"].as<bool>()){
+		tmvaMethodsOnly.insert(TMVA::Types::EMVA::kDNN);
+	}
 
 	if (mode == "prepare") {
 		// Step 1. Process CSV waveforms into a ROOT file with trees for learning
@@ -832,7 +857,7 @@ int main(int argc, char *argv[]) {
 		// Step 2. Learn ROOT TMVA to categorize the
 		std::vector<std::string> unmatched = result.unmatched();
 		// trainTMVA(unmatched[0].c_str());
-		trainTMVA_CNN(unmatched[0].c_str(), cnn, dnn, bdt, cnnpt);
+		trainTMVA_CNN(unmatched[0].c_str(), tmvaMethodsOnly);
 	} else if (mode == "tmva-gui") {
 		// View training output
 		std::vector<std::string> unmatched = result.unmatched();
@@ -840,7 +865,7 @@ int main(int argc, char *argv[]) {
 		TMVA::TMVAGui(unmatched[0].c_str());
 	} else if (mode == "classify") {
 		// Step 3. Use TMVA to categorize the
-		classifyWaveform_XY(weightDirPath.c_str(), testDirPath.c_str(), cnn, dnn, bdt, cnnpt);
+		classifyWaveform_Linear(weightDirPath.c_str(), testDirPath.c_str());
 	}
 
 	// Enter the event loop
