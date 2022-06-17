@@ -744,8 +744,9 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 	// }
 
 	// Read tree
-	std::vector<float>* fValuesPtr = &fValues;
-	treeTest->SetBranchAddress("vars", fValuesPtr);
+	std::vector<float> fV(nBins);
+	std::vector<float>* fVPtr = &fV;
+	treeTest->SetBranchAddress("vars", fVPtr);
 	Long64_t nEntries = treeTest->GetEntries();
 	for (Long64_t ievt=0; ievt < nEntries; ievt++) {
 		treeTest->GetEntry(ievt);
