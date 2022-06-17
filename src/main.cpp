@@ -483,8 +483,8 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
 	   // It is possible also to specify the number of training and testing events,
 	   // note we disable the computation of the correlation matrix of the input variables
 
-	   int nTrainSig = 1 * nEventsSig;
-	   int nTrainBkg = 1 * nEventsBkg;
+	   int nTrainSig = 0.8 * nEventsSig;
+	   int nTrainBkg = 0.8 * nEventsBkg;
 
 	   // build the string options for DataLoader::PrepareTrainingAndTestTree
 	   TString prepareOptions = TString::Format(
