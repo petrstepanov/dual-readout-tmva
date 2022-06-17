@@ -468,6 +468,8 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
 	   /// use new method (from ROOT 6.20 to add a variable array for all image data)
 	   loader->AddVariablesArray("vars", (Int_t)b);
 
+	   // TODO: try old method with vars[0] ?
+
 	   // Set individual event weights (the variables must exist in the original TTree)
 	   //    for signal    : factory->SetSignalWeightExpression    ("weight1*weight2");
 	   //    for background: factory->SetBackgroundWeightExpression("weight1*weight2");
@@ -673,6 +675,7 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 	// Create a set of variables and declare them to the reader
 	// - the variable names MUST corresponds in name and type to those given in the weight file(s) used
 	std::vector<float> fValues(nBins);
+	// std::vector<float> *fValuesPtr = new std::vector<float>(nBins);
 
 	// Instantiate the reader
 	// Taken from: https://root.cern/doc/master/TMVAClassificationApplication_8C.html
@@ -688,7 +691,9 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
     	// Not working...
 
     //}
-	reader->DataInfo().AddVariablesArray("vars", nBins, "", "", 0, 0, 'F', kFALSE, &fValues[0] ); // TODO: one of parameters is normalized. Use it?
+	// Petr Stepanov: &fValues is of wrong type. We need to pass float* which is &fvalues[0]
+
+	reader->DataInfo().AddVariablesArray("vars", nBins, "", "", 0, 0, 'F', kFALSE, &fValues[0]); // TODO: one of parameters is normalized. Use it?
 
 	// Book the MVA methods
 	// TString dir = weightDirPath;
@@ -755,17 +760,20 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 
 	// Read test tree
 	// std::vector<float> fV(nBins);
-	std::vector<float>* fVPtr = &fValues;
+	// std::vector<float>* fVPtr = &fValues;
 
 	// Petr Stepanov: address of the "vars" should be address of a pointer
-	treeTest->SetBranchAddress("vars", &fVPtr);
+	// How to read write vector to Tree: https://gist.github.com/jiafulow/8877081e032158471578
+	std::vector<float> *fValuesPtr = &fValues;
+	treeTest->SetBranchAddress("vars", &fValuesPtr);
 	Long64_t nEntries = treeTest->GetEntries();
 	for (Long64_t ievt=0; ievt < nEntries; ievt++) {
 		treeTest->GetEntry(ievt);
+
 //		TString hName = TString::Format("h%d", ievt);
 //		TH1F* h = new TH1F(hName.Data(), hName.Data(), nBins, 0, nBins);
 //		int i = 1;
-//		for (float val : fValues){
+//		for (float val : *fValuesPtr){
 //			h->SetBinContent(i, val);
 //			i++;
 //		}
@@ -810,7 +818,7 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 	delete reader;
 
 	Info("classifyWaveform_Linear", "Classification completed");
-	// gApplication->Terminate(0);
+	gApplication->Terminate(0);
 }
 
 int main(int argc, char *argv[]) {
