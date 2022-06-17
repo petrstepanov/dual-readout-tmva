@@ -6,6 +6,12 @@
 #include <TCanvas.h>
 
 namespace UiUtils {
+	// GUI specify a directory path
+	TString getDirectoryPath();
+
+	// GUI specify a directory path
+	TString getFilePath();
+
 	// Show OK message box
 	void msgBoxInfo(const char* title, const char* text);
 

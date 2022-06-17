@@ -4,7 +4,6 @@
 #include <TSystem.h>
 #include <TSystemDirectory.h>
 #include <TGClient.h>
-#include <TGFileDialog.h>
 #include <TObjString.h>
 #include <TUUID.h>
 // #include <TCanvas.h>
@@ -13,13 +12,6 @@
 #include <fstream>
 
 using namespace FileUtils;
-
-TString FileUtils::getDirectoryPath() {
-	TGFileInfo fi;
-	TGFileDialog* fileDialog = new TGFileDialog(gClient->GetRoot(), 0, EFileDialogMode::kDOpen, &fi);
-	TString dirPath = fi.fIniDir;
-	return dirPath;
-}
 
 // This function returns a list of filenames in directory with certain extension
 TList* FileUtils::getFilePathsInDirectory(const char *dirPath, const char* ext) {

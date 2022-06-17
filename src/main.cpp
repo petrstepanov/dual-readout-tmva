@@ -28,6 +28,7 @@
 
 #include <iostream>
 #include <set>
+#include <vector>
 #include "cxxopts.hpp"
 
 #define N_BINS 10000
@@ -176,8 +177,8 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 	// Specify directory for Cerenkov waveforms
 	TString cherWaveformsDirPath = cherPath;
 	if (cherWaveformsDirPath.Length() == 0) {
-		UiUtils::msgBoxInfo("Dual Readout TMVA", "Specify Cerenkov waveform directory");
-		cherWaveformsDirPath = FileUtils::getDirectoryPath();
+		Error("createROOTFileForLearning", "Directory with background spectra (Cube6, Cerenkov) not provided");
+		exit(1);
 	}
 
 	// Obtain "good" Cerenkov waveforms for TMVA
@@ -187,8 +188,8 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 	// Specify directory for Cerenkov AND Scintillation waveforms
 	TString cherScintWaveformsDirPath = cherScintPath;
 	if (cherScintWaveformsDirPath.Length() == 0) {
-		UiUtils::msgBoxInfo("Dual Readout TMVA", "Specify Cerenkov and scintillation waveform directory");
-		cherScintWaveformsDirPath = FileUtils::getDirectoryPath();
+		Error("createROOTFileForLearning", "Directory with background spectra (Cube6, Cerenkov) not provided");
+		exit(1);
 	}
 
 	// Obtain "good" Cerenkov and Scintillation waveforms for TMVA
@@ -651,14 +652,8 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
 }
 
 void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath){
-	// Use GUI picker if 'testDirPath' command line parameter not passed
-	TString testWaveformsDirPath = testDirPath;
-	if (testWaveformsDirPath.Length() == 0) {
-		UiUtils::msgBoxInfo("Dual Readout TMVA", "Specify directory with waveforms to be tested");
-		testWaveformsDirPath = FileUtils::getDirectoryPath();
-	}
 	// Read "good" waveforms to be tested
-	TList* goodTestHists = getGoodHistogramsList(testWaveformsDirPath);
+	TList* goodTestHists = getGoodHistogramsList(testDirPath);
 
 	// TODO: Crop and invert histograms is required for the hist->GetRandom() to work?
 	TList *goodTestHistsPrepared = new TList();
@@ -673,13 +668,6 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 	// Remember number of bins in first good histogram
 	TH1* firstHist = (TH1*)goodTestHistsPrepared->At(0);
 	Int_t nBins = firstHist->GetNbinsX();
-
-	// Use GUI picker if 'testDirPath' command line parameter not passed
-	TString weightFilesDirPath = weightDirPath;
-	if (weightFilesDirPath.Length() == 0) {
-		UiUtils::msgBoxInfo("Dual Readout TMVA", "Specify directory with weight files");
-		weightFilesDirPath = FileUtils::getDirectoryPath();
-	}
 
 	// Create a set of variables and declare them to the reader
 	// - the variable names MUST corresponds in name and type to those given in the weight file(s) used
@@ -820,7 +808,7 @@ int main(int argc, char *argv[]) {
 	// ("g,gui", "Start with ROOT GUI", cxxopts::value<bool>()->default_value("false"))
 	// ("cnn",  "Use TMVA Convolutional Neural Network (CNN) for training", cxxopts::value<bool>()->default_value("false"))
 	// ("cnnp", "Use TMVA Convolutional PyTorch Model for training", cxxopts::value<bool>()->default_value("false"))
-	("bdt",  "Use only Boosted Decision Trees (BDT) for training", cxxopts::value<bool>()->default_value("true"))
+	("bdt",  "Use only Boosted Decision Trees (BDT) for training", cxxopts::value<bool>()->default_value("false"))
 	("dnn",  "Use only Deep Neural Network (DNN) for training", cxxopts::value<bool>()->default_value("false"))
 	("help", "Print usage"); //
 
@@ -858,19 +846,56 @@ int main(int argc, char *argv[]) {
 
 	if (mode == "prepare") {
 		// Step 1. Process CSV waveforms into a ROOT file with trees for learning
+
+		// Check if backgroud directory passed via command line
+		if (backgroundDir.size() == 0){
+			// Use GUI picker if 'testDirPath' command line parameter not passed
+			UiUtils::msgBoxInfo("Dual Readout TMVA", "Specify directory with background spectra (Cube6, Cerenkov)");
+			TString dir = UiUtils::getDirectoryPath();
+			backgroundDir = dir.Data();
+		}
+		if (signalDir.size() == 0){
+			// Use GUI picker if 'testDirPath' command line parameter not passed
+			UiUtils::msgBoxInfo("Dual Readout TMVA", "Specify directory with signal spectra (Cube9, Cerenkov+scintillation)");
+			TString dir = UiUtils::getDirectoryPath();
+			signalDir = dir.Data();
+		}
 		createROOTFileForLearning(backgroundDir.c_str(), signalDir.c_str());
 	} else if (mode == "train") {
 		// Step 2. Learn ROOT TMVA to categorize the
 		std::vector<std::string> unmatched = result.unmatched();
+		if (unmatched.size() == 0){
+			// Use GUI picker if 'testDirPath' command line parameter not passed
+			UiUtils::msgBoxInfo("Dual Readout TMVA", "Specify training file path");
+			TString filePath = UiUtils::getFilePath();
+			unmatched.push_back(filePath.Data());
+		}
 		// trainTMVA(unmatched[0].c_str());
 		trainTMVA_CNN(unmatched[0].c_str(), tmvaMethodsOnly);
 	} else if (mode == "tmva-gui") {
 		// View training output
 		std::vector<std::string> unmatched = result.unmatched();
-		// trainTMVA(unmatched[0].c_str());
+		if (unmatched.size() == 0){
+			// Use GUI picker if 'testDirPath' command line parameter not passed
+			UiUtils::msgBoxInfo("Dual Readout TMVA", "Specify ROOT training result file");
+			TString weightDirPath = UiUtils::getFilePath();
+			unmatched.push_back(weightDirPath.Data());
+		}
 		TMVA::TMVAGui(unmatched[0].c_str());
 	} else if (mode == "classify") {
 		// Step 3. Use TMVA to categorize the
+		if (weightDirPath.size() == 0){
+			// Use GUI picker if 'testDirPath' command line parameter not passed
+			UiUtils::msgBoxInfo("Dual Readout TMVA", "Specify directory with weight files");
+			TString dir = UiUtils::getDirectoryPath();
+			weightDirPath = dir.Data();
+		}
+		if (testDirPath.size() == 0){
+			// Use GUI picker if 'testDirPath' command line parameter not passed
+			UiUtils::msgBoxInfo("Dual Readout TMVA", "Specify directory with test spectra");
+			TString dir = UiUtils::getDirectoryPath();
+			testDirPath = dir.Data();
+		}
 		classifyWaveform_Linear(weightDirPath.c_str(), testDirPath.c_str());
 	}
 

@@ -5,8 +5,23 @@
 #include <TROOT.h>
 #include <TText.h>
 #include <TEnv.h>
+#include <TGFileDialog.h>
 
 using namespace UiUtils;
+
+TString UiUtils::getDirectoryPath() {
+	TGFileInfo fi;
+	TGFileDialog* fileDialog = new TGFileDialog(gClient->GetRoot(), 0, EFileDialogMode::kDOpen, &fi);
+	TString dirPath = fi.fIniDir;
+	return dirPath;
+}
+
+TString UiUtils::getFilePath() {
+	TGFileInfo fi;
+	TGFileDialog* fileDialog = new TGFileDialog(gClient->GetRoot(), 0, EFileDialogMode::kFDOpen, &fi);
+	TString filePath = fi.fFilename;
+	return filePath;
+}
 
 void UiUtils::msgBoxInfo(const char* title, const char* text){
   new TGMsgBox(gClient->GetRoot(), NULL, title, text,

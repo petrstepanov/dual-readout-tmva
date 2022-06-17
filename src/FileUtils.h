@@ -7,8 +7,6 @@
 #include <TString.h>
 
 namespace FileUtils {
-	// GUI specify a directory path
-	TString getDirectoryPath();
 
 	// Obtain list of all file paths in directory
 	TList* getFilePathsInDirectory(const char* dirPath = "", const char* ext = 0);
