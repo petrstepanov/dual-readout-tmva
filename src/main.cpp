@@ -142,6 +142,7 @@ TList* getGoodHistogramsList(const char *dirPath) {
 	}
 
 	// Debug: save good waveforms under ../*-good/ folder
+	/*
 	for (TObject *obj : *hists) {
 		TH1 *hist = (TH1*) obj;
 		TString goodWaveformPath = dirPath; // gSystem->GetDirName(hist->GetTitle());
@@ -156,6 +157,7 @@ TList* getGoodHistogramsList(const char *dirPath) {
 
 		// UiUtils::saveHistogramAsImage(hist, goodPathName.Data());
 	}
+	*/
 
 	return hists;
 }
@@ -675,13 +677,21 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 	// Instantiate the reader
 	// Taken from: https://root.cern/doc/master/TMVAClassificationApplication_8C.html
 	TMVA::Reader* reader = new TMVA::Reader("!Color:!Silent");
-    for (std::size_t i = 0; i < nBins; i++) {
+
+	// Hint. We represent each spectrum bin for the reader as separate variable vars[0], vars[1],...
+	// Check the input "...weight.xml" files. Variables there are named like above
+    // for (std::size_t i = 0; i < nBins; i++) {
     	// Petr Stepanov: this taken from RReader.hxx, ROOT sources
-    	reader->AddVariable("vars", &fValues[i]);
-    }
+    	// TString varExpression = TString::Format("vars[%d]", i);
+    	// reader->AddVariable(varExpression, &fValues[i]);
+
+    	// Not working...
+
+    //}
+	reader->DataInfo().AddVariablesArray("vars", nBins, "", "", 0, 0, 'F', kFALSE, &fValues[0] ); // TODO: one of parameters is normalized. Use it?
 
 	// Book the MVA methods
-	TString dir = weightDirPath;
+	// TString dir = weightDirPath;
 	// TString prefix = "TMVA_CNN_Classification_";
 
 	// Book method(s)
@@ -744,30 +754,41 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 	// }
 
 	// Read test tree
-	std::vector<float> fV(nBins);
-	std::vector<float>* fVPtr = &fV;
-	treeTest->SetBranchAddress("vars", fVPtr);
+	// std::vector<float> fV(nBins);
+	std::vector<float>* fVPtr = &fValues;
+
+	// Petr Stepanov: address of the "vars" should be address of a pointer
+	treeTest->SetBranchAddress("vars", &fVPtr);
 	Long64_t nEntries = treeTest->GetEntries();
 	for (Long64_t ievt=0; ievt < nEntries; ievt++) {
 		treeTest->GetEntry(ievt);
+//		TString hName = TString::Format("h%d", ievt);
+//		TH1F* h = new TH1F(hName.Data(), hName.Data(), nBins, 0, nBins);
+//		int i = 1;
+//		for (float val : fValues){
+//			h->SetBinContent(i, val);
+//			i++;
+//		}
+//		new TCanvas();
+//		h->Draw();
 
+		// Get spectrunm name
+		TString spectrumName = "";
+		TObject* obj = goodTestHistsPrepared->At(ievt);
+		TH1* spectrumHist = (TH1*) obj;
+		if (spectrumHist) spectrumName = spectrumHist->GetName();
+		std::cout << "Entry: " << ievt << std::endl;
+		std::cout << "Filename: " << spectrumName << std::endl;
 		for (TH1F* hist : histograms){
 			// Get response from MVA - passing method name (here - hist name)
 			Double_t val = reader->EvaluateMVA( hist->GetName() );
 			// Fill histogram with responce
 			hist->Fill( val );
 
-			// Get spectrunm name
-			TString spectrumName = "";
-			TObject* obj = goodTestHistsPrepared->At(ievt);
-			TH1* spectrumHist = (TH1*) obj;
-			if (spectrumHist) spectrumName = spectrumHist->GetName();
-
 			// Output to screen
-			std::cout << "Entry: " << ievt << std::endl;
-			std::cout << "Filename: " << spectrumName << std::endl;
-			std::cout << "MVA response: " << val << std::endl << std::endl;
+			std::cout << "MVA response (" << hist->GetName() << "): " << val << std::endl;
 		}
+		std::cout << std::endl;
 
 	}
 
@@ -789,7 +810,7 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 	delete reader;
 
 	Info("classifyWaveform_Linear", "Classification completed");
-	gApplication->Terminate(0);
+	// gApplication->Terminate(0);
 }
 
 int main(int argc, char *argv[]) {
