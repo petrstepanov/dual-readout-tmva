@@ -160,3 +160,14 @@ TH1* HistUtils::prepHistForTMVA(TH1* hist){
 	TH1* croppedHist = HistUtils::cropHistogram(hist, hist->GetXaxis()->GetBinCenter(1), rightEdgeSeconds);
 	return croppedHist;
 }
+
+TList* HistUtils::prepHistsForTMVA(TList* histsList){
+	TList *preppedHistsList = new TList();
+	for (TObject *obj : *histsList) {
+		TH1 *hist = (TH1*) obj;
+		TH1 *prepedHist = HistUtils::prepHistForTMVA(hist);
+		// goodCherHists->Remove(obj);
+		preppedHistsList->Add(prepedHist);
+	}
+	return preppedHistsList;
+}

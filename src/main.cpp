@@ -185,7 +185,8 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 
 	// Obtain "good" Cerenkov waveforms for TMVA
 	TList *goodCherHists = getGoodHistogramsList(cherWaveformsDirPath.Data());
-	Info("createROOTFileForLearning", "\"Good\" background histograms selected");
+	TList *goodCherHistsPrepared = HistUtils::prepHistsForTMVA(goodCherHists);
+	Info("createROOTFileForLearning", "\"Good\" background histograms processed (invert, crop)");
 
 	// Specify directory for Cerenkov AND Scintillation waveforms
 	TString cherScintWaveformsDirPath = cherScintPath;
@@ -196,25 +197,8 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 
 	// Obtain "good" Cerenkov and Scintillation waveforms for TMVA
 	TList *goodCherScintHists = getGoodHistogramsList(cherScintWaveformsDirPath.Data());
-	Info("createROOTFileForLearning", "\"Good\" signal histograms selected");
-
-	// TODO: Crop and invert histograms is required for the hist->GetRandom() to work?
-	TList *goodCherHistsPrepared = new TList();
-	for (TObject *obj : *goodCherHists) {
-		TH1 *hist = (TH1*) obj;
-		TH1 *prepedHist = HistUtils::prepHistForTMVA(hist);
-		// goodCherHists->Remove(obj);
-		goodCherHistsPrepared->Add(prepedHist);
-		Info("createROOTFileForLearning", "\"Good\" background histograms processed (invert, crop)");
-	}
-	TList *goodCherScintHistsPrepared = new TList();
-	for (TObject *obj : *goodCherScintHists) {
-		TH1 *hist = (TH1*) obj;
-		TH1 *prepedHist = HistUtils::prepHistForTMVA(hist);
-		// goodCherScintHists->Remove(obj);
-		goodCherScintHistsPrepared->Add(prepedHist);
-		Info("createROOTFileForLearning", "\"Good\" signal histograms processed (invert, crop)");
-	}
+	TList *goodCherScintHistsPrepared = HistUtils::prepHistsForTMVA(goodCherScintHists);
+	Info("createROOTFileForLearning", "\"Good\" signal histograms processed (invert, crop)");
 
 	// Prepare trees
 	TTree* treeBackground;
@@ -256,7 +240,6 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 
 	tmvaFile->Close();
 	Info("createROOTFileForLearning", "File \"%s\" created", tmvaFileNamePath.Data());
-	gApplication->Terminate(0);
 }
 
 /*
@@ -651,26 +634,19 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
 		}
 
 		Info("trainTMVA_CNN", "Training completed");
-		gApplication->Terminate(0);
 }
 
-void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath){
+std::map<std::string, float> classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath){
 	// Read "good" waveforms to be tested
 	TList* goodTestHists = getGoodHistogramsList(testDirPath);
+	TList *goodTestHistsPrepared = HistUtils::prepHistsForTMVA(goodTestHists); 	// TODO: Crop and invert histograms (required for the hist->GetRandom() to work)
+	if (goodTestHistsPrepared->GetSize() < 1){
 
-	// TODO: Crop and invert histograms is required for the hist->GetRandom() to work?
-	TList *goodTestHistsPrepared = new TList();
-	for (TObject *obj : *goodTestHists) {
-		TH1 *hist = (TH1*) obj;
-		TH1 *prepedHist = HistUtils::prepHistForTMVA(hist);
-		// goodCherHists->Remove(obj);
-		goodTestHistsPrepared->Add(prepedHist);
-		Info("createROOTFileForLearning", "\"Good\" background histograms processed (invert, crop)");
+		std::map<std::string, float> map {};
+		return map;
 	}
-
 	// Remember number of bins in first good histogram
-	TH1* firstHist = (TH1*)goodTestHistsPrepared->At(0);
-	Int_t nBins = firstHist->GetNbinsX();
+	Int_t nBins = ((TH1*)(goodTestHistsPrepared->At(0)))->GetNbinsX();
 
 	// Create a set of variables and declare them to the reader
 	// - the variable names MUST corresponds in name and type to those given in the weight file(s) used
@@ -767,6 +743,7 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 	std::vector<float> *fValuesPtr = &fValues;
 	treeTest->SetBranchAddress("vars", &fValuesPtr);
 	Long64_t nEntries = treeTest->GetEntries();
+	std::map<std::string, float> map;
 	for (Long64_t ievt=0; ievt < nEntries; ievt++) {
 		treeTest->GetEntry(ievt);
 
@@ -792,9 +769,9 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 			Double_t val = reader->EvaluateMVA( hist->GetName() );
 			// Fill histogram with responce
 			hist->Fill( val );
-
+			map[hist->GetName()] = val;
 			// Output to screen
-			std::cout << "MVA response (" << hist->GetName() << "): " << val << std::endl;
+			std::cout << "MVA response for \"" << hist->GetName() << "\": " << val << std::endl;
 		}
 		std::cout << std::endl;
 
@@ -812,13 +789,12 @@ void classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath)
 //	histDnnCpu->Write();
 
 	target->Close();
-
 	std::cout << "--- Created root file: \"TMVApp.root\" containing the MVA output histograms" << std::endl;
 
 	delete reader;
-
 	Info("classifyWaveform_Linear", "Classification completed");
-	gApplication->Terminate(0);
+
+	return map;
 }
 
 int main(int argc, char *argv[]) {
@@ -929,9 +905,10 @@ int main(int argc, char *argv[]) {
 		classifyWaveform_Linear(weightDirPath.c_str(), testDirPath.c_str());
 	}
 
+
 	// Enter the event loop
 	app->Run();
 
 	// Return success
-	return 0;
+	gSystem->Exit(0);
 }

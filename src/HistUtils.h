@@ -31,6 +31,7 @@ namespace HistUtils {
 
 	// Prepare histogram for machine learning analysis (invert and crop)
 	TH1* prepHistForTMVA(TH1* hist);
+	TList* prepHistsForTMVA(TList* histsList);
 }
 
 #endif
