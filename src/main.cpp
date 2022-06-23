@@ -746,8 +746,16 @@ std::map<std::string, float> classifyWaveform_Linear(const char *weightDirPath, 
 
     // Petr Stepanov: address of the "vars" should be address of a pointer
     // How to read write vector to Tree: https://gist.github.com/jiafulow/8877081e032158471578
-    std::vector<float> *fValuesPtr = &fValues;
-    treeTest->SetBranchAddress("vars", &fValuesPtr);
+    // Petr Stepanov: current GitHub issue prevents passing a vector to the Reader
+    // std::vector<float> *fValuesPtr = &fValues;
+    // treeTest->SetBranchAddress("vars", &fValuesPtr);
+
+    for (int i=0; i < nBins; i++){
+        TString expr = "var";
+        expr += i;
+        treeTest->SetBranchAddress("expr", &fValues[i]);
+    }
+
     Long64_t nEntries = treeTest->GetEntries();
     std::map<std::string, float> map;
     for (Long64_t ievt = 0; ievt < nEntries; ievt++) {
