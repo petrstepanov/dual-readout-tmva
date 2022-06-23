@@ -799,14 +799,18 @@ std::map<std::string, float> classifyWaveform_Linear(const char *weightDirPath, 
     TFile *target = new TFile("TMVApp.root", "RECREATE");
     for (TH1F *hist : histograms) {
         hist->Write();
+        TCanvas* c = new TCanvas();
+        hist->Draw();
     }
 //	histBdtF->Write();
 //	histDnnCpu->Write();
+
 
     target->Close();
     std::cout << "--- Created root file: \"TMVApp.root\" containing the MVA output histograms" << std::endl;
 
     delete reader;
+
     Info("classifyWaveform_Linear", "Classification completed");
 
     return map;
