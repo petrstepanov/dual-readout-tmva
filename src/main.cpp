@@ -442,13 +442,13 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
     loader->AddBackgroundTree(backgroundTree, backgroundWeight);
 
     // Read histogram size from file
-
+    TVectorD *bins = inputFile->Get<TVectorD>("bins");
+    Double_t b = (*bins)[0];
 
     // add event variables (image)
     // use new method (from ROOT 6.20 to add a variable array for all image data)
     // issue: https://github.com/root-project/root/pull/10780
-    TVectorD *bins = inputFile->Get<TVectorD>("bins");
-    Double_t b = (*bins)[0];    // loader->AddVariablesArray("vars", (Int_t)b);
+    // loader->AddVariablesArray("vars", (Int_t)b);
 
     // Petr Stepanov: need to revert to old method becauyse of the issue above
     for (int i=0; i < b; i++){
