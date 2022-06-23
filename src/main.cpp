@@ -753,7 +753,7 @@ std::map<std::string, float> classifyWaveform_Linear(const char *weightDirPath, 
     for (int i=0; i < nBins; i++){
         TString expr = "var";
         expr += i;
-        treeTest->SetBranchAddress("expr", &fValues[i]);
+        treeTest->SetBranchAddress(expr.Data(), &fValues[i]);
     }
 
     Long64_t nEntries = treeTest->GetEntries();
