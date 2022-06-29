@@ -39,7 +39,7 @@
 // Function imports all Tektronix waveforms from a directory and filters out the "bad" (noise) waveforms.
 // Returns TList of "good" TH1* histograms
 
-TList* getGoodHistogramsList(const char *dirPath) {
+TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFALSE) {
     // Obtain Cerenkov waveform paths from a directory
     TList *waveformFilenames = FileUtils::getFilePathsInDirectory(dirPath, ".csv");
 
@@ -60,7 +60,9 @@ TList* getGoodHistogramsList(const char *dirPath) {
         TString waveformImgPath("");
         waveformImgPath = StringUtils::stripExtension(waveformCsvPath->String().Data());
         waveformImgPath += ".png";
-        // UiUtils::saveHistogramAsImage(hist, waveformImgPath.Data());
+        if (saveWaveformImages){
+            UiUtils::saveHistogramAsImage(hist, waveformImgPath.Data());
+        }
     }
 
     // Compose a tree with waveform parameters
@@ -142,22 +144,22 @@ TList* getGoodHistogramsList(const char *dirPath) {
     }
 
     // Debug: save good waveforms under ../*-good/ folder
-    /*
-     for (TObject *obj : *hists) {
-     TH1 *hist = (TH1*) obj;
-     TString goodWaveformPath = dirPath; // gSystem->GetDirName(hist->GetTitle());
-     goodWaveformPath += "-good";
-     // Check output directory for "good" waveforms exist
-     if (gSystem->AccessPathName(goodWaveformPath.Data())) {
-     gSystem->mkdir(goodWaveformPath.Data());
-     }
-     TString goodWaveformName = FileUtils::getFileNameNoExtensionFromPath(hist->GetTitle());
-     goodWaveformName += ".png";
-     TString goodPathName = gSystem->ConcatFileName(goodWaveformPath.Data(), goodWaveformName.Data());
-
-     // UiUtils::saveHistogramAsImage(hist, goodPathName.Data());
-     }
-     */
+    //if (saveWaveformImages) {
+    //    for (TObject *obj : *hists) {
+    //        TH1 *hist = (TH1*) obj;
+    //        TString goodWaveformPath = dirPath; // gSystem->GetDirName(hist->GetTitle());
+    //        goodWaveformPath += "-good";
+    //        // Check output directory for "good" waveforms exist
+    //        if (gSystem->AccessPathName(goodWaveformPath.Data())) {
+    //            gSystem->mkdir(goodWaveformPath.Data());
+    //        }
+    //        TString goodWaveformName = FileUtils::getFileNameNoExtensionFromPath(hist->GetTitle());
+    //        goodWaveformName += ".png";
+    //        TString goodPathName = gSystem->ConcatFileName(goodWaveformPath.Data(), goodWaveformName.Data());
+    //
+    //        UiUtils::saveHistogramAsImage(hist, goodPathName.Data());
+    //    }
+    //}
 
     return hists;
 }
@@ -168,7 +170,7 @@ enum class MLFileType {
     PDF         // https://root.cern/doc/master/TMVAClassification_8C.html
 };
 
-void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, MLFileType rootFileType = MLFileType::Linear) {
+void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, Bool_t saveWaveformImages = kFALSE, MLFileType rootFileType = MLFileType::Linear) {
     // TinyFileDialogs approach
     // tinyfd_forceConsole = 0; /* default is 0 */
     // tinyfd_assumeGraphicDisplay = 0; /* default is 0 */
@@ -184,7 +186,7 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
     }
 
     // Obtain "good" Cerenkov waveforms for TMVA
-    TList *goodCherHists = getGoodHistogramsList(cherWaveformsDirPath.Data());
+    TList *goodCherHists = getGoodHistogramsList(cherWaveformsDirPath.Data(), saveWaveformImages);
     TList *goodCherHistsPrepared = HistUtils::prepHistsForTMVA(goodCherHists);
     Info("createROOTFileForLearning", "\"Good\" background histograms processed (invert, crop)");
 
@@ -196,7 +198,7 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
     }
 
     // Obtain "good" Cerenkov and Scintillation waveforms for TMVA
-    TList *goodCherScintHists = getGoodHistogramsList(cherScintWaveformsDirPath.Data());
+    TList *goodCherScintHists = getGoodHistogramsList(cherScintWaveformsDirPath.Data(), saveWaveformImages);
     TList *goodCherScintHistsPrepared = HistUtils::prepHistsForTMVA(goodCherScintHists);
     Info("createROOTFileForLearning", "\"Good\" signal histograms processed (invert, crop)");
 
@@ -355,7 +357,7 @@ void createROOTFileForLearning(const char *cherPath, const char *cherScintPath, 
 void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmvaMethodOnly) {
     // Petr Stepanov: refer to: https://root.cern/doc/master/TMVA__CNN__Classification_8C.html
 
-    int num_threads = 0;  // use default threads
+    int num_threads = 0;    // use default threads
     TMVA::Tools::Instance();
     // Enable MT running
     if (num_threads >= 0) {
@@ -451,7 +453,7 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
     // loader->AddVariablesArray("vars", (Int_t)b);
 
     // Petr Stepanov: need to revert to old method becauyse of the issue above
-    for (int i=0; i < b; i++){
+    for (int i = 0; i < b; i++) {
         TString expression = "var";
         expression += i;
         loader->AddVariable(expression);
@@ -465,8 +467,8 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
     // loader->SetBackgroundWeightExpression( "weight" );
 
     // Apply additional cuts on the signal and background samples (can be different)
-    TCut mycuts = ""; // for example: TCut mycuts = "abs(var1)<0.5 && abs(var2-0.5)<1";
-    TCut mycutb = ""; // for example: TCut mycutb = "abs(var1)<0.5";
+    TCut mycuts = "";    // for example: TCut mycuts = "abs(var1)<0.5 && abs(var2-0.5)<1";
+    TCut mycutb = "";    // for example: TCut mycutb = "abs(var1)<0.5";
 
     // Tell the factory how to use the training and testing events
     //
@@ -521,11 +523,11 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
 
     // Check if ROOT is built with TMVA CNN CPU or GPU support
 #ifndef R__HAS_TMVACPU
-		#ifndef R__HAS_TMVAGPU
-			Warning("trainTMVA_CNN", "TMVA is not build with GPU or CPU multi-thread support. Cannot use TMVA Deep Learning for Convolutional Neural Network (CNN)");
-			tmvaMethodOnly.erase(TMVA::Types::kDNN);
-		#endif
-		#endif
+#ifndef R__HAS_TMVAGPU
+    Warning("trainTMVA_CNN", "TMVA is not build with GPU or CPU multi-thread support. Cannot use TMVA Deep Learning for Convolutional Neural Network (CNN)");
+    tmvaMethodOnly.erase(TMVA::Types::kDNN);
+#endif
+#endif
 
     if (tmvaMethodOnly.size() == 0 || tmvaMethodOnly.count(TMVA::Types::kDNN)) {
 
@@ -540,7 +542,7 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
                 "Optimizer=ADAM,DropConfig=0.0+0.0+0.0+0.");
 
         TString trainingStrategyString("TrainingStrategy=");
-        trainingStrategyString += trainingString1; // + "|" + trainingString2 + ....
+        trainingStrategyString += trainingString1;        // + "|" + trainingString2 + ....
 
         // Build now the full DNN Option string
 
@@ -554,9 +556,9 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
         TString methodTitle = TMVA::Types::Instance().GetMethodName(TMVA::Types::kDNN);
         // use GPU if available
 #ifdef R__HAS_TMVAGPU
-			  dnnOptions += ":Architecture=GPU";
-			  // dnnMethodName += "_GPU";
-		#elif defined(R__HAS_TMVACPU)
+        dnnOptions += ":Architecture=GPU";
+        // dnnMethodName += "_GPU";
+#elif defined(R__HAS_TMVACPU)
         dnnOptions += ":Architecture=CPU";
         // dnnMethodName += "_CPU";
 #endif
@@ -641,7 +643,7 @@ void trainTMVA_CNN(const char *trainingFileURI, std::set<TMVA::Types::EMVA> tmva
 std::map<std::string, float> classifyWaveform_Linear(const char *weightDirPath, const char *testDirPath) {
     // Read "good" waveforms to be tested
     TList *goodTestHists = getGoodHistogramsList(testDirPath);
-    TList *goodTestHistsPrepared = HistUtils::prepHistsForTMVA(goodTestHists); // TODO: Crop and invert histograms (required for the hist->GetRandom() to work)
+    TList *goodTestHistsPrepared = HistUtils::prepHistsForTMVA(goodTestHists);  // TODO: Crop and invert histograms (required for the hist->GetRandom() to work)
     if (goodTestHistsPrepared->GetSize() < 1) {
 
         std::map<std::string, float> map { };
@@ -672,10 +674,10 @@ std::map<std::string, float> classifyWaveform_Linear(const char *weightDirPath, 
     // Petr Stepanov: &fValues is of wrong type. We need to pass float* which is &fvalues[0]
     //                issue with the AddVariablesArray() method: https://github.com/root-project/root/pull/10780
     // reader->DataInfo().AddVariablesArray("vars", nBins, "", "", 0, 0, 'F', kFALSE, &fValues[0]); // TODO: one of parameters is normalized. Use it?
-    for (int i = 0; i < nBins; i++){
+    for (int i = 0; i < nBins; i++) {
         TString expression = "var";
         expression += i;
-        reader->AddVariable(expression ,&fValues[i]);
+        reader->AddVariable(expression, &fValues[i]);
     }
 
     // Book the MVA methods
@@ -750,7 +752,7 @@ std::map<std::string, float> classifyWaveform_Linear(const char *weightDirPath, 
     // std::vector<float> *fValuesPtr = &fValues;
     // treeTest->SetBranchAddress("vars", &fValuesPtr);
 
-    for (int i=0; i < nBins; i++){
+    for (int i = 0; i < nBins; i++) {
         TString expr = "var";
         expr += i;
         treeTest->SetBranchAddress(expr.Data(), &fValues[i]);
@@ -799,12 +801,11 @@ std::map<std::string, float> classifyWaveform_Linear(const char *weightDirPath, 
     TFile *target = new TFile("TMVApp.root", "RECREATE");
     for (TH1F *hist : histograms) {
         hist->Write();
-        TCanvas* c = new TCanvas();
+        TCanvas *c = new TCanvas();
         hist->Draw();
     }
 //	histBdtF->Write();
 //	histDnnCpu->Write();
-
 
     target->Close();
     std::cout << "--- Created root file: \"TMVApp.root\" containing the MVA output histograms" << std::endl;
@@ -825,16 +826,15 @@ int main(int argc, char *argv[]) {
     cxxopts::Options options("Dual Readout TMVA", "ROOT Machine Learning (ML) approach to categorize waveforms upon their shape.");
 
     // Add command-line options
-    options.allow_unrecognised_options().add_options()("mode", "Program mode ('prepare', 'train', 'tmva-gui', 'classify')", cxxopts::value<std::string>()) //
-    ("background", "Directory path for background .csv waveforms ('prepare')", cxxopts::value<std::string>()) //
-    ("signal", "Directory path for signal .csv waveforms ('prepare')", cxxopts::value<std::string>()) //
-    ("weight", "Machine learning weight file path ('classify')", cxxopts::value<std::string>()) //
-    ("test", "Directory path with .csv waveforms for classifying ('test')", cxxopts::value<std::string>()) //
-    // ("g,gui", "Start with ROOT GUI", cxxopts::value<bool>()->default_value("false"))
-    // ("cnn",  "Use TMVA Convolutional Neural Network (CNN) for training", cxxopts::value<bool>()->default_value("false"))
-    // ("cnnp", "Use TMVA Convolutional PyTorch Model for training", cxxopts::value<bool>()->default_value("false"))
-    ("bdt", "Use only Boosted Decision Trees (BDT) for training", cxxopts::value<bool>()->default_value("false"))("dnn",
-            "Use only Deep Neural Network (DNN) for training", cxxopts::value<bool>()->default_value("false"))("help", "Print usage"); //
+    options.allow_unrecognised_options().add_options()    //
+    ("mode", "Program mode ('prepare', 'train', 'tmva-gui', 'classify')", cxxopts::value<std::string>())    //
+    ("save-waveform-img", "Save .png waveforms images('prepare')", cxxopts::value<bool>()->default_value("false"))    //
+    ("background", "Directory path for background .csv waveforms ('prepare')", cxxopts::value<std::string>())    //
+    ("signal", "Directory path for signal .csv waveforms ('prepare')", cxxopts::value<std::string>())    //
+    ("weight", "Machine learning weight file path ('classify')", cxxopts::value<std::string>())    //
+    ("test", "Directory path with .csv waveforms for classifying ('test')", cxxopts::value<std::string>())    //
+    ("bdt", "Use only Boosted Decision Trees (BDT) for training", cxxopts::value<bool>()->default_value("false"))    //
+    ("dnn", "Use only Deep Neural Network (DNN) for training", cxxopts::value<bool>()->default_value("false"))("help", "Print usage");    //
 
     auto result = options.parse(app->Argc(), app->Argv());
 
@@ -858,6 +858,10 @@ int main(int argc, char *argv[]) {
     if (result.count("test"))
         testDirPath = result["test"].as<std::string>();
 
+    Bool_t saveWaveformImages = kFALSE;
+    if (result["save-waveform-img"].as<bool>()) {
+        saveWaveformImages = kTRUE;
+    }
     // By default, training is performed for all possible methods (currently implemented kBDT and kDNN)
     // However, user can specify only certain training methods in particular via command-line parameters
     std::set<TMVA::Types::EMVA> tmvaMethodsOnly { };
@@ -884,7 +888,7 @@ int main(int argc, char *argv[]) {
             TString dir = UiUtils::getDirectoryPath();
             signalDir = dir.Data();
         }
-        createROOTFileForLearning(backgroundDir.c_str(), signalDir.c_str());
+        createROOTFileForLearning(backgroundDir.c_str(), signalDir.c_str(), saveWaveformImages);
     } else if (mode == "train") {
         // Step 2. Learn ROOT TMVA to categorize the
         std::vector<std::string> unmatched = result.unmatched();
