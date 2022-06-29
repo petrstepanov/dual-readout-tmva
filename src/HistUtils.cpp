@@ -24,10 +24,17 @@ TTree* HistUtils::histsToTreeLin(TList* hists, const char* treeName, const char*
 
 	// Create vector with waveform values to be written to the Tree
 	// https://root.cern/doc/master/TMVA__CNN__Classification_8C.html
-	std::vector<float> waveform(nBins);
-	std::vector<float> *waveformPtr = &waveform;
+	// Petr Stepanov: workaround for the ROOT TMVA issue:https://github.com/root-project/root/pull/10780
+	// std::vector<float> waveform(nBins);
+	// std::vector<float> *waveformPtr = &waveform;
+    // tree->Branch("vars", "std::vector<float>", &waveformPtr);
 
-	tree->Branch("vars", "std::vector<float>", &waveformPtr);
+	std::vector<float> waveform(nBins);
+	for (int i=0; i < nBins; i++){
+	    TString expr = TString::Format("var%d", i);
+	    TString expr2 = TString::Format("var%d/F", i);
+	    tree->Branch(expr.Data(), &waveform[i], expr2.Data()); // Branch(expr.Data(), "std::vector<float>", &waveform[i]);
+	}
 
 	for (TObject* obj : * hists){
 	  TH1* hist = (TH1*) obj;
