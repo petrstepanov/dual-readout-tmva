@@ -58,7 +58,7 @@ To reproduce obtained results program code needs to be checked out to the JLab c
 * Source the environment `source /site/12gev_phys/softenv.csh 2.5`.
 * Create a folder for the out-of-source build: `mkdir dual-readout-tmva-build && cd dual-readout-tmva-build`.
 * Generate the makefile with CMake: `cmake ../dual-readout-tmva`.
-* Build the source code: ``make -j`nproc```.
+* Build the source code: `make -j\`nproc\``.
 
 Executable `dual-readout-tmva` will be generated inside the current folder. Pprogram mode (preparation, training or classification) and paths to the source directories containing input data are passed as command-line parameters.
 
