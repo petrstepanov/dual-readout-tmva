@@ -115,10 +115,16 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
     VOLTAGE_THRESHOLD, MIN_PEAK_POS, MAX_PEAK_POS);
     UiUtils::addCanvasTitle(canvas, canvasTitle.Data(), canvasSubTitle.Data());
 
-    canvas->cd(1);
-    UiUtils::plotBranch(waveformsTree, "minV", "Waveform Minimum Amplitude", "Minimum Amplitude, V", "Counts", 200);
-    canvas->cd(2);
-    UiUtils::plotBranch(waveformsTree, "peakPos", "Waveform Peak Positions", "Peak Position, s", "Counts", 200);
+    {
+        TVirtualPad* pad = canvas->cd(1);
+        UiUtils::plotBranch(waveformsTree, "minV", "Waveform Minimum Amplitude", "Minimum Amplitude, V", "Counts", 100);
+        pad->SetLogy(kTRUE);
+    }
+    {
+        TVirtualPad* pad = canvas->cd(2);
+        UiUtils::plotBranch(waveformsTree, "peakPos", "Waveform Peak Positions", "Peak Position, s", "Counts", 100);
+        pad->SetLogy(kTRUE);
+    }
 
     TString wfPngFilePath = gSystem->ConcatFileName(dirPath, "waveforms-parameters.png");
     canvas->SaveAs(wfPngFilePath.Data());
