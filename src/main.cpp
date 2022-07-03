@@ -45,7 +45,11 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
 
     // Compose list of histograms
     TList *hists = new TList();
+    Int_t counter = 0;
     for (TObject *obj : *waveformFilenames) {
+        Double_t progress = (Double_t)counter/(Double_t)waveformFilenames->GetSize();
+        Info("getGoodHistogramsList", "Converting waveform to ROOT histogam %d / %d (%.1f %%)", ++counter, waveformFilenames->GetSize(), progress);
+        std::cout << '\r';
         TObjString *waveformCsvPath = (TObjString*) obj;
 
         // Import CSV waveform into histogram

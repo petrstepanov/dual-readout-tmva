@@ -36,7 +36,7 @@ It is necessary to exclude the "testing" data from the data for ML training proc
 
 During the preparation stage the .csv files are imported into ROOT histograms. Some spectra from the oscilloscope do not contain neither Cerenkov nor scintillation signals. Those are noise spectra. Program creates and visualizes a ROOT file with waveform name, minimum voltage value (signal is negative) and the peak position. Currently "good" (not noise) waveforms are selected based on the following criteria:
 * Amplitude threshold value of a "good" waveform should be < 0.03 V. 
-* Peak position in a reange of -1E-8 to 2E-8 s.
+* Peak position in a reange of -10 to 20 ns.
 
 Below the above waveform criteria are visualized for the set of Cherenkov and scintillation (Cube 9) sample:
 
