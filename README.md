@@ -48,7 +48,31 @@ Two known copied to Examples
 
 ### Classification Stage
 
+## Program Build and Run
 
+To reproduce obtained results program code needs to be checked out to the JLab computer environent.
+
+* Log in to the computing farm `ssh <your-username>@login.jlab.org`.
+* Connect to one of the ifarm nodes `ssh ifarm`.
+* Clone the program code: `git clone https://github.com/petrstepanov/dual-readout-tmva`.
+* Source the environment `source /site/12gev_phys/softenv.csh 2.5`.
+* Create a folder for the out-of-source build: `mkdir dual-readout-tmva-build && cd dual-readout-tmva-build`.
+* Generate the makefile with CMake: `cmake ../dual-readout-tmva`.
+* Build the source code: ``make -j`nproc```.
+
+Executable `dual-readout-tmva` will be generated inside the current folder. Pprogram mode (preparation, training or classification) and paths to the source directories containing input data are passed as command-line parameters.
+
+### Preparation Stage
+
+First we run the program in the preparation stage providing paths to source folders with known types:
+
+```
+./dual-readout-tmva --mode prepare --background <cerenkov-waveforms-path> --signal <cerenkov-and-scintillation-path>
+```
+
+where `<cerenkov-waveforms-path>` and `<cerenkov-and-scintillation-path>` are folder paths of the Cube 6 and Cube 9 waveforms respectively.
+
+Program outputs the `tmva-input.root` file containing processed waveforms written in a ROOT tree under the `treeB` (background, Cerenkov only) and `treeS` (signal, Cerenkov and scintillation) branches.
 
 ## Future goals
 
