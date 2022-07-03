@@ -6,6 +6,7 @@
 #include <TGClient.h>
 #include <TObjString.h>
 #include <TUUID.h>
+#include <TError.h>
 // #include <TCanvas.h>
 
 #include <iostream>
