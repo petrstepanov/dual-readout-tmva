@@ -30,16 +30,21 @@ Program should be compiled and executed on the JLab computing farm. First two st
 
 Waveform CSV files for each classification group hosted on the `pristine@jlab.org` are copied to the `/w/hallc-scshelf2102/kaon/petrs/Data/Cubes` folder for processing. Group rename operation is preformed to give unique name to each .csv file (with the help of `rename '' 'Mar14_' *.csv` command).
 
-It is necessary to exclude the "testing" data from the data for ML training process. Therefore, randomly selected 600 spectra from each category (a total of 1200 files) are moved to the `/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/samples-testing` folder. Rest of the spectra from each category are consolidated under following folders:
-* **Cerenkov-only** spectra are saved to:<br/>`/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/sample6-learning`.
-* **Cerenkov and scintillation** spectra:<br/>`/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/sample9-learning`.
+It is necessary to exclude the "testing" data from the data for ML training process. Therefore, randomly selected 600 spectra from each category (a total of 1200 files) are moved to the `/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/samples-testing` folder. Rest of the spectra from each category are consolidated in following folders:
+* **Cerenkov-only** spectra are stored under:<br/>`/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/sample6-learning/`
+* **Cerenkov and scintillation** are copied to:<br/>`/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/sample9-learning/`
 
-During the preparation stage the .csv files are imported into ROOT histograms. Some spectra from the oscilloscope do not contain neither Cerenkov nor scintillation signals. Those are noise spectra. Program creates and visualizes a ROOT file with waveform name, minimum voltage value (signal is negative) and the peak position. Currently "good" waveforms are selected based on the following criteria:
-*
-*
-records filters out noise spectra with respect to the maximum amplitude of the signal and position of the peak maximum. TODO: insert image with tree of the waveform properties. Elaborate on the filtering process?
+During the preparation stage the .csv files are imported into ROOT histograms. Some spectra from the oscilloscope do not contain neither Cerenkov nor scintillation signals. Those are noise spectra. Program creates and visualizes a ROOT file with waveform name, minimum voltage value (signal is negative) and the peak position. Currently "good" (not noise) waveforms are selected based on the following criteria:
+* Amplitude threshold value of a "good" waveform should be < 0.03 V. 
+* Peak position in a reange of -1E-8 to 2E-8 s.
 
-There are two ways of preparing ROOT data for machine learning. Starting ROOT v6.20 a new method for the ML tree preparation, namely writing all the histogram bin values into a single tree leaf was implemented (refer to the image below). Unfortunately this method failed to provide correct classification results. An error in the ROOT code was found and [reported in this Pull Request](https://github.com/root-project/root/pull/10780). In order to bea able to run the program on the JLab farm, input data was formatted in a traditional way, where every ML variable (histogram bin) is stored in a separate tree leaf. Tree structures for both - modern and traditional approaches are visualized below.
+Below the above waveform criteria are visualized for the set of Cherenkov and scintillation (Cube 9) sample:
+
+<figure>
+  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/setup.png" alt="Particle identification setup schematics" />
+</figure>
+
+Noise waveforms are filtered out. "Good" waveforms are now used to create an input data for the ML algorithm. There are two ways of preparing ROOT data for machine learning. Starting ROOT v6.20 a new method for the ML tree preparation, namely writing all the histogram bin values into a single tree leaf was implemented (refer to the image below). Unfortunately this method failed to provide correct classification results. An error in the ROOT code was found and [reported in this Pull Request](https://github.com/root-project/root/pull/10780). In order to bea able to run the program on the JLab farm, input data was formatted in a traditional way, where every ML variable (histogram bin) is stored in a separate tree leaf. Tree structures for both - modern and traditional approaches are visualized below.
 
 <figure>
   <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/tree.png" alt="Creating ROOT tree with data for TMVA Machine Learning" />
