@@ -38,11 +38,17 @@ During the preparation stage the .csv files are imported into ROOT histograms. S
 * Amplitude threshold value of a "good" waveform should be < 0.03 V. 
 * Peak position in a reange of -10 to 20 ns.
 
-Below the waveform criteria are visualized for the set of Cherenkov and scintillation (Cube 9) sample:
+Image below visualizes the criteria of filtering out noisy spectra (for the set of Cherenkov-only samples, Cube 9).
 
 <figure>
   <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/waveform-criteria.png" alt="Criteria for filtering out the noise waveforms" />
 </figure>
+
+The ratio of the "good" to noise waveforms for two groups of samples is following:
+* For **Cerenkov-only** spectra:<br/>`Identified 51% "good" waveforms (8226), 49% noise waveforms (7837).`
+* For **Cerenkov and scintillation** spectra:<br/>`Identified 56% "good" waveforms (18606), 44% noise waveforms (14449).`
+
+ is Info in <getGoodHistogramsList>: 
 
 **Further improvement** of the program is implementation of AI-based classification of the noise spectra into a separate group. 
 
