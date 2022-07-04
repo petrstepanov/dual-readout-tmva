@@ -145,6 +145,7 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
     f->Close();
 
     // Apply cut to spectra and filter out ones
+    Int_t nHists = hists->GetSize();
     for (TObject *obj : *hists) {
         TH1 *hist = (TH1*) obj;
 
@@ -152,10 +153,10 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
         Double_t minVoltage = hist->GetMinimum();
         Double_t peakPosition = hist->GetXaxis()->GetBinCenter(hist->GetMinimumBin());
         Int_t nBins = hist->GetNbinsX();
-        StringUtils::writeProgress("Identifying \"noise\" waveforms", hists->GetSize());
         if (minVoltage > VOLTAGE_THRESHOLD || peakPosition < MIN_PEAK_POS || peakPosition > MAX_PEAK_POS || nBins != N_BINS) {
             hists->Remove(obj);
         }
+        StringUtils::writeProgress("Identifying \"noise\" waveforms", nHists);
     }
     Int_t goodPercent = hists->GetSize()*100/waveformFilenames->GetSize();
     Info("getGoodHistogramsList", "Identified %d \"good\" waveforms (%d %%), %d noise waveforms (%d %%).", hists->GetSize(), goodPercent, waveformFilenames->GetSize() - hists->GetSize(), 100-goodPercent);
