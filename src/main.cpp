@@ -27,6 +27,7 @@
 #include "./UiUtils.h"
 
 #include <iostream>
+#include <iomanip>
 #include <set>
 #include <vector>
 #include "cxxopts.hpp"
@@ -46,13 +47,12 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
     // Compose list of histograms
     TList *hists = new TList();
     Int_t counter = 0;
-    std::cout << "  " << std::endl;
+    Int_t nHists = waveformFilenames->GetSize();
     for (TObject *obj : *waveformFilenames) {
         Double_t progress = (Double_t)(++counter)/waveformFilenames->GetSize();
         // Flush cout
         // https://stackoverflow.com/questions/3057977/rewinding-stdcout-to-go-back-to-the-beginning-of-a-line
-        std::cout << "\rConverting waveform" << ++counter  << " to ROOT histogram (" << progress << "%)" << std::flush;
-        std::cout << '\r';
+        std::cout << "\rConverting waveforms to ROOT histograms: " << std::fixed << std::setprecision(2) << progress << " (" << ++counter << "/" << nHists << ")    ";
         TObjString *waveformCsvPath = (TObjString*) obj;
 
         // Import CSV waveform into histogram
@@ -71,7 +71,7 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
             UiUtils::saveHistogramAsImage(hist, waveformImgPath.Data());
         }
     }
-    std::cout << std::endl; // all done
+    std::cout << ", done." << std::endl; // all done
 
     // Compose a tree with waveform parameters
     TTree *waveformsTree = new TTree("tree_waveforms", "Tree with waveforms information");
