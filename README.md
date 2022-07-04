@@ -59,8 +59,10 @@ Now that the noise waveforms are filtered out, "good" ones are prepared to input
 As a temporary workaround to be able to run the program on the JLab farm, the input data was formatted in a traditional way, where every ML variable (histogram bin) is stored in a separate tree leaf.
 
 ### Training Stage
+TODO: complete
 
 ### Classification Stage
+TODO: complete
 
 ## Program Build and Run
 
@@ -87,6 +89,12 @@ First we run the program in the preparation stage providing paths to source fold
 where `<cerenkov-waveforms-path>` and `<cerenkov-and-scintillation-path>` are folder paths of the Cube 6 and Cube 9 waveforms respectively.
 
 Program outputs the `tmva-input.root` file containing processed non-noise waveforms written in a ROOT tree under the `treeB` (background, Cerenkov only) and `treeS` (signal, Cerenkov and scintillation) branches.
+
+### Training Stage
+TODO: complete
+
+### Classification Stage
+TODO: complete
 
 ## Future goals
 
