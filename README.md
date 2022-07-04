@@ -34,15 +34,17 @@ It is necessary to exclude the "testing" data from the data for ML training proc
 * **Cerenkov-only** spectra are stored under:<br/>`/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/sample6-learning/`
 * **Cerenkov and scintillation** are copied to:<br/>`/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/sample9-learning/`
 
-During the preparation stage the .csv files are imported into ROOT histograms. Some spectra from the oscilloscope do not contain neither Cerenkov nor scintillation signals. Those are noise spectra. Program creates and visualizes a ROOT file with waveform name, minimum voltage value (signal is negative) and the peak position. Currently "good" (not noise) waveforms are selected based on the following criteria:
+During the preparation stage the .csv files are imported into ROOT histograms. Some spectra from the oscilloscope do not contain neither Cerenkov nor scintillation signals. Those are noise spectra. Program creates and visualizes a ROOT file with waveform name, minimum voltage value (signal is negative) and the peak position. Currently noise waveforms are manually filtered out from all the waveforms upon following criteria:
 * Amplitude threshold value of a "good" waveform should be < 0.03 V. 
 * Peak position in a reange of -10 to 20 ns.
 
-Below the above waveform criteria are visualized for the set of Cherenkov and scintillation (Cube 9) sample:
+Below the waveform criteria are visualized for the set of Cherenkov and scintillation (Cube 9) sample:
 
 <figure>
-  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/setup.png" alt="Particle identification setup schematics" />
+  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/waveform-criteria.png" alt="Criteria for filtering out the noise waveforms" />
 </figure>
+
+**Further improvement** of the program is implementation of AI-based classification of the noise spectra into a separate group. 
 
 Noise waveforms are filtered out. "Good" waveforms are now used to create an input data for the ML algorithm. There are two ways of preparing ROOT data for machine learning. Starting ROOT v6.20 a new method for the ML tree preparation, namely writing all the histogram bin values into a single tree leaf was implemented (refer to the image below). Unfortunately this method failed to provide correct classification results. An error in the ROOT code was found and [reported in this Pull Request](https://github.com/root-project/root/pull/10780). In order to bea able to run the program on the JLab farm, input data was formatted in a traditional way, where every ML variable (histogram bin) is stored in a separate tree leaf. Tree structures for both - modern and traditional approaches are visualized below.
 

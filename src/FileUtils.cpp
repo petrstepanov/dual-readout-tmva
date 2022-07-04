@@ -51,7 +51,7 @@ TList* FileUtils::getFilePathsInDirectory(const char *dirPath, const char *ext) 
         }
     }
 //    std::cout << ", done." << std::endl; // all done
-    Info("FileUtils::getFilePathsInDirectory", "Found %d files with \"%s\" extension (%d total in directory).", files->GetSize(), ext, fileNames->GetSize());
+    Info("FileUtils::getFilePathsInDirectory", "Found %d files with \"%s\" extension (%d total in directory).", fileNames->GetSize(), ext, files->GetSize());
     return fileNames;
 }
 

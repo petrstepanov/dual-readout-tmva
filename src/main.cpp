@@ -159,7 +159,7 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
         StringUtils::writeProgress("Identifying \"noise\" waveforms", nHists);
     }
     Int_t goodPercent = hists->GetSize()*100/waveformFilenames->GetSize();
-    Info("getGoodHistogramsList", "Identified %d \"good\" waveforms (%d %%), %d noise waveforms (%d %%).", hists->GetSize(), goodPercent, waveformFilenames->GetSize() - hists->GetSize(), 100-goodPercent);
+    Info("getGoodHistogramsList", "Identified %d%% \"good\" waveforms (%d), %d%% noise waveforms (%d).", goodPercent, hists->GetSize(), 100-goodPercent, waveformFilenames->GetSize() - hists->GetSize());
     // Debug: save good waveforms under ../*-good/ folder
     //if (saveWaveformImages) {
     //    for (TObject *obj : *hists) {
