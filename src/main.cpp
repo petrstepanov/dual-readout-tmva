@@ -49,10 +49,10 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
     Int_t counter = 0;
     Int_t nHists = waveformFilenames->GetSize();
     for (TObject *obj : *waveformFilenames) {
-        Double_t progress = (Double_t)(++counter)/waveformFilenames->GetSize();
+        Double_t progress = (Double_t)(++counter)/nHists;
         // Flush cout
         // https://stackoverflow.com/questions/3057977/rewinding-stdcout-to-go-back-to-the-beginning-of-a-line
-        std::cout << "\rConverting waveforms to ROOT histograms: " << std::fixed << std::setprecision(2) << progress << "% (" << counter << "/" << nHists << ")    ";
+        std::cout << "\rConverting waveforms to ROOT histograms: " << std::fixed << std::setprecision(2) << progress*100 << "% (" << counter << "/" << nHists << ")    ";
         TObjString *waveformCsvPath = (TObjString*) obj;
 
         // Import CSV waveform into histogram

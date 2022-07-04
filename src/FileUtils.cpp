@@ -10,6 +10,7 @@
 // #include <TCanvas.h>
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 
 using namespace FileUtils;
@@ -31,8 +32,12 @@ TList* FileUtils::getFilePathsInDirectory(const char *dirPath, const char *ext) 
     TList *files = dir->GetListOfFiles();
     files->Sort();
     TIter next(files);
+    Int_t counter = 0;
+    Int_t nFiles = files->GetSize();
     while (TSystemFile *file = (TSystemFile*) next()) {
+        Double_t progress = (Double_t)(++counter)/nFiles;
         TString fileName = file->GetName();
+        std::cout << "\rAnalyzing file type and extension: " << std::fixed << std::setprecision(2) << progress*100 << "% (" << counter << "/" << nFiles << ")    ";
         if (!file->IsDirectory() && (ext == 0 || (ext != 0 && fileName.EndsWith(ext)))) {
             // std::cout << "* " << fileName << std::endl;
             TString filePath = file->GetTitle();
@@ -43,6 +48,7 @@ TList* FileUtils::getFilePathsInDirectory(const char *dirPath, const char *ext) 
             // std::cout << "  " << fileName << std::endl;
         }
     }
+    std::cout << ", done." << std::endl; // all done
     Info("FileUtils::getFilePathsInDirectory", "%d files total, %d with \"%s\" extension. ", files->GetSize(), fileNames->GetSize(), ext);
     return fileNames;
 }
