@@ -45,20 +45,18 @@ Image below visualizes the criteria of filtering out noisy spectra (for the set 
 </figure>
 
 The ratio of the "good" to noise waveforms for two groups of samples is following:
-* For **Cerenkov-only** spectra:<br/>`Identified 51% "good" waveforms (8226), 49% noise waveforms (7837).`
-* For **Cerenkov and scintillation** spectra:<br/>`Identified 56% "good" waveforms (18606), 44% noise waveforms (14449).`
-
- is Info in <getGoodHistogramsList>: 
+* For **Cerenkov-only** spectra:<br/>`Identified 51% "good" waveforms (8226 files), 49% noise waveforms (7837 files).`
+* For **Cerenkov and scintillation** spectra:<br/>`Identified 56% "good" waveforms (18606 files), 44% noise waveforms (14449 files).`
 
 **Further improvement** of the program is implementation of AI-based classification of the noise spectra into a separate group. 
 
-Noise waveforms are filtered out. "Good" waveforms are now used to create an input data for the ML algorithm. There are two ways of preparing ROOT data for machine learning. Starting ROOT v6.20 a new method for the ML tree preparation, namely writing all the histogram bin values into a single tree leaf was implemented (refer to the image below). Unfortunately this method failed to provide correct classification results. An error in the ROOT code was found and [reported in this Pull Request](https://github.com/root-project/root/pull/10780). In order to bea able to run the program on the JLab farm, input data was formatted in a traditional way, where every ML variable (histogram bin) is stored in a separate tree leaf. Tree structures for both - modern and traditional approaches are visualized below.
+Now that the noise waveforms are filtered out, "good" ones are prepared to input to the ML algorithm. There are two ways of preparing ROOT data for machine learning. Starting ROOT v6.20 a new method for the ML tree preparation, namely writing all the histogram bin values into a single tree leaf was implemented (refer to the image below). Unfortunately this method failed to provide correct classification results. An error in the ROOT code was found and [reported in this Pull Request](https://github.com/root-project/root/pull/10780). Tree structures for both - modern and traditional approaches are visualized below.
 
 <figure>
   <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/tree.png" alt="Creating ROOT tree with data for TMVA Machine Learning" />
 </figure>
 
-Two known copied to Examples 
+As a temporary workaround to be able to run the program on the JLab farm, the input data was formatted in a traditional way, where every ML variable (histogram bin) is stored in a separate tree leaf.
 
 ### Training Stage
 
