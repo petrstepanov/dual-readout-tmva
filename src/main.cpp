@@ -141,6 +141,7 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
     TString wfRootFilePath = gSystem->ConcatFileName(dirPath, "waveforms-parameters.root");
     TFile *f = new TFile(wfRootFilePath.Data(), "RECREATE");
     waveformsTree->Write();
+    canvas->Write();
     f->Close();
 
     // Apply cut to spectra and filter out ones
