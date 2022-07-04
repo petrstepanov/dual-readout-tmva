@@ -11,8 +11,8 @@ namespace StringUtils {
 	// TODO: move to some IO utils?
 	void writeProgress(const char* s, Int_t nTimes);
 
-    void writeRewind(const char* s);
-    void writeRewindEnd();
+//    void writeRewind(const char* s);
+//    void writeRewindEnd();
 }
 
 #endif

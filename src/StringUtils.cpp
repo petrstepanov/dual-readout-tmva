@@ -32,14 +32,15 @@ void StringUtils::writeProgress(const char* s, Int_t nTimes){
     std::cout << "\r" << s << ": " << progressPercent << "% (" << counter << "/" << nTimes << ") " << std::flush;
     if (counter == nTimes){
         counter = 1;
-        writeRewindEnd();
+        // writeRewindEnd();
+        std::cout << ", done." << std::endl;
     }
 }
 
-void StringUtils::writeRewind(const char* s){
-    std::cout << "\r" << s << std::flush;
-}
+//void StringUtils::writeRewind(const char* s){
+//    std::cout << "\r" << s << std::flush;
+//}
 
-void StringUtils::writeRewindEnd(){
-    std::cout << ", done." << std::endl;
-}
+//void StringUtils::writeRewindEnd(){
+//    std::cout << ", done." << std::endl;
+//}
