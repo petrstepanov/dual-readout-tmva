@@ -155,7 +155,8 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
         Int_t counter = 0;
         if (minVoltage > VOLTAGE_THRESHOLD || peakPosition < MIN_PEAK_POS || peakPosition > MAX_PEAK_POS || nBins != N_BINS) {
             hists->Remove(obj);
-            StringUtils::writeRewind(TString::Form("Excluding \"noise\" waveforms: %d found.", ++counter));
+            TString text = TString::Format("Excluding \"noise\" waveforms: %d found.", ++counter);
+            StringUtils::writeRewind(text.Data());
         }
         StringUtils::writeRewindEnd();
     }
