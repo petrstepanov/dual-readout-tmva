@@ -40,7 +40,7 @@ TList* FileUtils::getFilePathsInDirectory(const char *dirPath, const char *ext) 
             TObjString *objFileName = new TObjString(fileNamePath.Data());
             fileNames->Add(objFileName);
         } else {
-            std::cout << "  " << fileName << std::endl;
+            // std::cout << "  " << fileName << std::endl;
         }
     }
     Info("FileUtils::getFilePathsInDirectory", "%d files total, %d with \"%s\" extension. ", files->GetSize(), fileNames->GetSize());
