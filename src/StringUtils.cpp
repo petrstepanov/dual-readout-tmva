@@ -31,7 +31,7 @@ void StringUtils::writeProgress(const char* s, Int_t nTimes){
     // https://stackoverflow.com/questions/3057977/rewinding-stdcout-to-go-back-to-the-beginning-of-a-line
     std::cout << "\r" << s << ": " << progressPercent << "% (" << counter << "/" << nTimes << ") " << std::flush;
     if (counter == nTimes){
-        counter = 1;
+        counter = 0;
         // writeRewindEnd();
         std::cout << ", done." << std::endl;
     }
