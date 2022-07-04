@@ -72,7 +72,6 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
             UiUtils::saveHistogramAsImage(hist, waveformImgPath.Data());
         }
     }
-    std::cout << ", done." << std::endl; // all done
 
     // Compose a tree with waveform parameters
     TTree *waveformsTree = new TTree("tree_waveforms", "Tree with waveforms information");
@@ -155,8 +154,8 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
         Int_t nBins = hist->GetNbinsX();
         if (minVoltage > VOLTAGE_THRESHOLD || peakPosition < MIN_PEAK_POS || peakPosition > MAX_PEAK_POS || nBins != N_BINS) {
             hists->Remove(obj);
-            StringUtils::writeProgress("Identifying \"noise\" waveforms", hists->GetSize());
         }
+        StringUtils::writeProgress("Identifying \"noise\" waveforms", hists->GetSize());
     }
     Int_t goodPercent = hists->GetSize()*100/waveformFilenames->GetSize();
     Info("getGoodHistogramsList", "Identified %d \"good\" waveforms (%d %%), %d noise waveforms (%d %%).", hists->GetSize(), goodPercent, waveformFilenames->GetSize() - hists->GetSize(), 100-goodPercent);
