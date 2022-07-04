@@ -7,6 +7,12 @@
 namespace StringUtils {
 	// Extract filename from path
 	TString stripExtension(const char *str);
+
+	// TODO: move to some IO utils?
+	void writeProgress(const char* s, Int_t nTimes);
+
+    void writeRewind(const char* s);
+    void writeRewindEnd();
 }
 
 #endif

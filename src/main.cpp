@@ -12,6 +12,7 @@
 #include <TList.h>
 #include <TROOT.h>
 #include <TObjString.h>
+#include <TString.h>
 
 #include <TMVA/Types.h>
 #include <TMVA/DataLoader.h>
@@ -46,13 +47,12 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
 
     // Compose list of histograms
     TList *hists = new TList();
-    Int_t counter = 0;
-    Int_t nHists = waveformFilenames->GetSize();
+//    Int_t counter = 0;
+//    Int_t nHists = ;
     for (TObject *obj : *waveformFilenames) {
-        Double_t progress = (Double_t)(++counter)/nHists;
-        // Flush cout
-        // https://stackoverflow.com/questions/3057977/rewinding-stdcout-to-go-back-to-the-beginning-of-a-line
-        std::cout << "\rConverting waveforms to ROOT histograms: " << std::fixed << std::setprecision(2) << progress*100 << "% (" << counter << "/" << nHists << ")    ";
+        StringUtils::writeProgress("Converting waveforms to ROOT histograms", waveformFilenames->GetSize());
+//        std::cout << "\r: " progress*100 << "% (" << counter << "/" << nHists << ") ";
+        //        std::cout << "\rConverting waveforms to ROOT histograms: " progress*100 << "% (" << counter << "/" << nHists << ") ";
         TObjString *waveformCsvPath = (TObjString*) obj;
 
         // Import CSV waveform into histogram
@@ -152,10 +152,12 @@ TList* getGoodHistogramsList(const char *dirPath, bool saveWaveformImages = kFAL
         Double_t minVoltage = hist->GetMinimum();
         Double_t peakPosition = hist->GetXaxis()->GetBinCenter(hist->GetMinimumBin());
         Int_t nBins = hist->GetNbinsX();
+        Int_t counter = 0;
         if (minVoltage > VOLTAGE_THRESHOLD || peakPosition < MIN_PEAK_POS || peakPosition > MAX_PEAK_POS || nBins != N_BINS) {
             hists->Remove(obj);
-            std::cout << "Removing waveform \"" << hist->GetTitle() << "\"" << std::endl;
+            StringUtils::writeRewind(TString::Form("Excluding \"noise\" waveforms: %d found.", ++counter));
         }
+        StringUtils::writeRewindEnd();
     }
 
     // Debug: save good waveforms under ../*-good/ folder
