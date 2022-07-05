@@ -62,7 +62,7 @@ Unfortunately this method failed to provide correct classification results. An e
 
 ### Training Stage
 
-Currently two ML alorithms are implemented in the code, namely: boosted decision trees (BDT) and deep neural network (DNN). DNN algorithm requires splitting the input data into the "training" and "test" events. A ratio of 80÷20 for training-to-test events was selected respectively. Results of the training stage are presented on the graphs below:
+Currently two ML alorithms are implemented in the code: boosted decision trees (BDT) and deep neural network (DNN). DNN algorithm requires splitting the input data into the "training" and "test" events. A ratio of 80÷20 for training-to-test events was selected respectively. Results of the training stage are presented on the graphs below:
 
 <figure>
   <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/plots/4b-overtraining-check.png" alt="TMVA Overtraining Check" />
@@ -77,7 +77,7 @@ Currently two ML alorithms are implemented in the code, namely: boosted decision
 </figure>
 
 <figure>
-  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/plots/8-training-history.png" alt="TMVA Training History" />
+  <img width="50%" src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/plots/8-training-history.png" alt="TMVA Training History" />
 </figure>
 
 ### Classification Stage
