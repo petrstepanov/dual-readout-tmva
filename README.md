@@ -61,7 +61,24 @@ Next, the data is ready to be written into the ROOT tree of a special format for
 Unfortunately this method failed to provide correct classification results. An error in the ROOT code was found and [reported in this Pull Request](https://github.com/root-project/root/pull/10780). Tree structures for both - modern and traditional approaches are visualized below. As a temporary workaround to be able to run the program on the JLab farm, the input data was formatted in a traditional way, where every ML variable (histogram bin) is stored in a separate tree branch.
 
 ### Training Stage
-TODO: complete
+
+Currently two ML alorithms are implemented in the code, namely: boosted decision trees (BDT) and deep neural network (DNN). DNN algorithm requires splitting the input data into the "training" and "test" events. A ratio of 80÷20 for training-to-test events was selected respectively. Results of the training stage are presented on the graphs below:
+
+<figure>
+  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/plots/4b-overtraining-check.png" alt="TMVA Overtraining Check" />
+</figure>
+
+<figure>
+  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/plots/5a-cut-efficiences.png" alt="TMVA Cut Efficiences" />
+</figure>
+
+<figure>
+  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/plots/5b-signal-efficiency.png" alt="TMVA Signal Efficiency" />
+</figure>
+
+<figure>
+  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/plots/8-training-history.png" alt="TMVA Training History" />
+</figure>
 
 ### Classification Stage
 TODO: complete
