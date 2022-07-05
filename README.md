@@ -50,13 +50,15 @@ The ratio of the "good" to noise waveforms for two groups of samples is followin
 
 **Further improvement** of the program is implementation of AI-based classification of the noise spectra into a separate group. 
 
-Now that the noise waveforms are filtered out, "good" ones are prepared to input to the ML algorithm. There are two ways of preparing ROOT data for machine learning. Starting ROOT v6.20 a new method for the ML tree preparation, namely writing all the histogram bin values into a single tree leaf was implemented (refer to the image below). Unfortunately this method failed to provide correct classification results. An error in the ROOT code was found and [reported in this Pull Request](https://github.com/root-project/root/pull/10780). Tree structures for both - modern and traditional approaches are visualized below.
+Now that the noise waveforms are filtered out, "good" ones are prepared to input to the ML algorithm. To my knowledge, some ML algorithms cannot work with negative variable data. Therefore, original waveforms (oscilloscope gives negative signal) are inverted. Next, negative values are set to zero. Additionally, we crop the the waveforms to exclude insignificant data. This processing is preformed in the `HistUtils::prepHistForTMVA()` method.
+
+Next, the data is ready to be written into the ROOT tree of a special format for the TMVA analysis. There are two approaches of creating ROOT tree data for machine learning. Starting ROOT v6.20 a modern method for the ML tree preparation, where all the histogram bin values into a single tree branch as an array is implemented. Refer to the image below.
 
 <figure>
   <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/tree.png" alt="Creating ROOT tree with data for TMVA Machine Learning" />
 </figure>
 
-As a temporary workaround to be able to run the program on the JLab farm, the input data was formatted in a traditional way, where every ML variable (histogram bin) is stored in a separate tree leaf.
+Unfortunately this method failed to provide correct classification results. An error in the ROOT code was found and [reported in this Pull Request](https://github.com/root-project/root/pull/10780). Tree structures for both - modern and traditional approaches are visualized below. As a temporary workaround to be able to run the program on the JLab farm, the input data was formatted in a traditional way, where every ML variable (histogram bin) is stored in a separate tree branch.
 
 ### Training Stage
 TODO: complete
