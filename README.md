@@ -80,8 +80,42 @@ Currently two ML alorithms are implemented in the code: boosted decision trees (
   <img width="50%" src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/plots/8-training-history.png" alt="TMVA Training History" />
 </figure>
 
+Training stage is rather resourceful. However it should be run only once. As the result of the training stage, TMVA outputs the so-called **weight" files** containing ML training information. A set of weight files each corresponding to the implemented ML algorithm (BDT and DNN) are used to classify the "unknown" waveforms without the need to re-train the model.
+
 ### Classification Stage
-TODO: complete
+
+On this stage program takes a set of the "unknown" spectra and appliues the trained ML algorithm to determine if a spectrum shape corresponds to the **Cerenkov-only** or **Cerenkov with scintillation** category. 
+
+A set of "unknown" spectra which is a random mix of Cerenkov and Cerenkov+scintillation spectra excluded from the training stage is analyzed by the AI algorithm. "Unknown" spectra are segregated under `/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/samples-testing` folder. 
+
+The output of the classification stage for a particular spectrum is a float number in a range of [0, 1]. Classification results for unknown specrta are stored in the histograms and presented on the image below.
+
+<figure>
+  <img width="50%" src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/classification.png" alt="TMVA Classification results"/>
+</figure>
+
+Additionally program ouptuts the classification results in the Terminal output. There is a set of two classification results for each spectrum - for BDT and DNN classifiers.
+
+```
+Entry: 1
+Filename: Mar28_DataLog_10236_7f6b_812b
+MVA response for "TMVA_CNN_Classification_BDT.weights": 0.486826
+MVA response for "TMVA_CNN_Classification_DNN.weights": 0.999035
+
+Entry: 2
+Filename: Mar28_DataLog_10237_7f6d_812b
+MVA response for "TMVA_CNN_Classification_BDT.weights": 0.56271
+MVA response for "TMVA_CNN_Classification_DNN.weights": 0.999979
+
+Entry 3: 
+Filename: Mar28_DataLog_10264_7fb0_812c
+MVA response for "TMVA_CNN_Classification_BDT.weights": 0.378375
+MVA response for "TMVA_CNN_Classification_DNN.weights": 0.999851
+
+...
+```
+
+All information output by the program is currently stored in `/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-results/TMVA-Jun23` folder. Next section describes how to reproduce the obtained results.
 
 ## Program Build and Run
 
@@ -110,7 +144,10 @@ where `<cerenkov-waveforms-path>` and `<cerenkov-and-scintillation-path>` are fo
 Program outputs the `tmva-input.root` file containing processed non-noise waveforms written in a ROOT tree under the `treeB` (background, Cerenkov only) and `treeS` (signal, Cerenkov and scintillation) branches.
 
 ### Training Stage
-TODO: complete
+
+TODO:
+
+During the training stage program outputs `ClassificationOutput.root` file containing the data along with the weight files.
 
 ### Classification Stage
 TODO: complete
