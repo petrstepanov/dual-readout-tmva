@@ -91,7 +91,7 @@ A set of "unknown" spectra which is a random mix of Cerenkov and Cerenkov+scinti
 The output of the classification stage for a particular spectrum is a float number in a range of [0, 1]. Classification results for unknown specrta are stored in the histograms and presented on the image below.
 
 <figure>
-  <img width="50%" src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/classification.png" alt="TMVA Classification results"/>
+  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/classification.png" alt="TMVA Classification results"/>
 </figure>
 
 Additionally program ouptuts the classification results in the Terminal output. There is a set of two classification results for each spectrum - for BDT and DNN classifiers.
@@ -145,12 +145,31 @@ Program outputs the `tmva-input.root` file containing processed non-noise wavefo
 
 ### Training Stage
 
-TODO:
+Next, we train the ML algorithms by providing it with a two sets of "known" waveforms from two different sets:
 
-During the training stage program outputs `ClassificationOutput.root` file containing the data along with the weight files.
+```
+./dual-readout-tmva --mode train <path-to-tmva-input-file>
+```
+
+During the training stage program outputs `ClassificationOutput.root` file containing training plots data along with the weight files. To run the TMVA GUI and view plots with training history, one can use following command:
+
+```
+./dual-readout-tmva --mode tmva-gui <path-to-classification-output-file>
+```
+
+where `<path-to-classification-output-file>` is the `ClassificationOutput.root` file path.
 
 ### Classification Stage
-TODO: complete
+
+Finally, to proceed with the classification stage, program must be run with following command line parameters:
+
+```
+./dual-readout-tmva --mode classify --weight <weight-folder> --test <test-folder>
+``` 
+
+where `<weight-folder>` is a directory path where the weight files are stored, `<test-folder>` is a directory path containing the "unknown" waveforms to be classified.
+
+Program outputs the classification information in the Terminal and additionally saves classification results in the output `TMVApp.root` file.
 
 ## Future goals
 
