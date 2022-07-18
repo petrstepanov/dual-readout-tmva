@@ -34,23 +34,28 @@ It is necessary to exclude the "testing" data from the data for ML training proc
 * **Cerenkov-only** spectra are stored under:<br/>`/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/sample6-learning/`
 * **Cerenkov and scintillation** are copied to:<br/>`/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/sample9-learning/`
 
-During the preparation stage the .csv files are imported into ROOT histograms. Some spectra from the oscilloscope do not contain neither Cerenkov nor scintillation signals. Those are noise spectra. Program creates and visualizes a ROOT file with waveform name, minimum voltage value (signal is negative) and the peak position. Currently noise waveforms are manually filtered out from all the waveforms upon following criteria:
-* Amplitude threshold value of a "good" waveform should be < 0.03 V. 
+In this experiment the size of the trigger plates (top and bottom) is larger compared to the scintillation crystal. Therefore some trigger events are produced with a very weak to empty signal. **We will name these waveforms as the "baseline" waveforms**. 
+
+On the other hand, when incident particle hits both trigger plates and the scintillation crystal, we obtain a waveform containing Cerenkov and (possibly) scintillation information.  **We will refer these waveforms as the "event" waveforms**. 
+
+During the preparation stage the .csv files are imported into ROOT histograms. To separate the "baseline" spectra from the actual "event" signals (when scintillation signal is registeres), program creates and visualizes a ROOT file with a waveform name, minimum registered voltage value (signal is negative) and the peak position. Next, the "baseline" waveforms are manually filtered out from all the waveforms upon following criteria:
+
+* Amplitude threshold value of a "event" waveform should be < 0.03 V. 
 * Peak position in a reange of -10 to 20 ns.
 
 Image below visualizes the criteria of filtering out noisy spectra (for the set of Cherenkov-only samples, Cube 9).
 
 <figure>
-  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/waveform-criteria.png" alt="Criteria for filtering out the noise waveforms" />
+  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/waveform-criteria.png" alt="Criteria for filtering out baseline waveforms" />
 </figure>
 
-The ratio of the "good" to noise waveforms for two groups of samples is following:
-* For **Cerenkov-only** spectra:<br/>`Identified 51% "good" waveforms (8226 files), 49% noise waveforms (7837 files).`
-* For **Cerenkov and scintillation** spectra:<br/>`Identified 56% "good" waveforms (18606 files), 44% noise waveforms (14449 files).`
+The ratio of the "event" to "baseline" waveforms for two groups of samples is following:
+* For **Cerenkov-only** spectra:<br/>`Identified 51% "event" waveforms (8226 files), 49% baseline waveforms (7837 files).`
+* For **Cerenkov and scintillation** spectra:<br/>`Identified 56% "event" waveforms (18606 files), 44% baseline waveforms (14449 files).`
 
-**Further improvement** of the program is implementation of AI-based classification of the noise spectra into a separate group. 
+**Further improvement** of the program is implementation of AI-based classification of the baseline spectra into a separate group. 
 
-Now that the noise waveforms are filtered out, "good" ones are prepared to input to the ML algorithm. To my knowledge, some ML algorithms cannot work with negative variable data. Therefore, original waveforms (oscilloscope gives negative signal) are inverted. Next, negative values are set to zero. Additionally, we crop the the waveforms to exclude insignificant data. This processing is preformed in the `HistUtils::prepHistForTMVA()` method.
+Now that the "baseline" waveforms are filtered out, "event" signals are prepared to input to the ML algorithm. To my knowledge, some ML algorithms cannot work with negative variable data. Therefore, original waveforms (oscilloscope gives negative signal) are inverted. Next, negative values are set to zero. Additionally, we crop the the waveforms to exclude insignificant data. This processing is preformed in the `HistUtils::prepHistForTMVA()` method.
 
 Next, the data is ready to be written into the ROOT tree of a special format for the TMVA analysis. There are two approaches of creating ROOT tree data for machine learning. Starting ROOT v6.20 a modern method for the ML tree preparation, where all the histogram bin values into a single tree branch as an array is implemented. Refer to the image below.
 
@@ -141,7 +146,7 @@ First we run the program in the preparation stage providing paths to source fold
 
 where `<cerenkov-waveforms-path>` and `<cerenkov-and-scintillation-path>` are folder paths of the Cube 6 and Cube 9 waveforms respectively.
 
-Program outputs the `tmva-input.root` file containing processed non-noise waveforms written in a ROOT tree under the `treeB` (background, Cerenkov only) and `treeS` (signal, Cerenkov and scintillation) branches.
+Program outputs the `tmva-input.root` file containing processed "event" waveforms written in a ROOT tree under the `treeB` (background, Cerenkov only) and `treeS` (signal, Cerenkov and scintillation) branches.
 
 ### Training Stage
 
@@ -173,10 +178,10 @@ Program outputs the classification information in the Terminal and additionally 
 
 ## Future goals
 
-Some of the acquired experimental spectra are simply noise that does not contain any meaningful data. This happens due to some challenges in the experimental setup assembly. Spectra are visualized below:
+"Baseline" spectra are visualized on the image below:
 
 <figure>
-  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/noise.png" alt="Example noise specrtra to be classified with AI ROOt TMVA" />
+  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/noise.png" alt="Example set of baseline specrtra to be classified with AI ROOT TMVA" />
 </figure>
 
-Technically a multi-class classification can be performed to effectively sort out noise spectra into a separate group (class of signals). This will lift the necessity of filtering the noise spectra before carrying out the analysis.
+Technically a multi-class classification can be performed to effectively train the model to segregate the "baseline" spectra into a separate third group of signals. This will lift the necessity of filtering the "baseline" spectra prior to preforming the ML analysis.
