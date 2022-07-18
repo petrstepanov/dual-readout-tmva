@@ -24,17 +24,21 @@ This program demonstrates that ML techniques can be successfully applied to perf
 * **Training**. Known input data that corresponds to each classification group is given to the ML algorithm.
 * **Classification**. Unknown spectra are analyzed by the trained algorithm and classified into groups.
 
-Program should be compiled and executed on the JLab computing farm. First two stages are the most resourceful ones. Classification can be carried out on a local computer. Below we elaborate on the program workflow, syntax and provide the end result of the classification.
+Program should be compiled and executed on the JLab computing farm. First two stages are the most compute intensive ones. Classification can be carried out on a local computer. Below we elaborate on the program workflow, syntax and provide the end result of the classification.
 
 ### Preparation Stage
 
 Waveform CSV files for each classification group hosted on the `pristine@jlab.org` are copied to the `/w/hallc-scshelf2102/kaon/petrs/Data/Cubes` folder for processing. Group rename operation is preformed to give unique name to each .csv file (with the help of `rename '' 'Mar14_' *.csv` command).
 
-It is necessary to exclude the "testing" data from the data for ML training process. Therefore, randomly selected 600 spectra from each category (a total of 1200 files) are moved to the `/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/samples-testing` folder. Rest of the spectra from each category are consolidated in following folders:
+It is necessary to exclude a subset of "testing" data for ML training process. Therefore, randomly selected 600 spectra from each category (a total of 1200 files) are moved to the `/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/samples-testing` folder. Rest of the spectra from each category are consolidated in following folders:
 * **Cerenkov-only** spectra are stored under:<br/>`/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/sample6-learning/`
 * **Cerenkov and scintillation** are copied to:<br/>`/w/hallc-scshelf2102/kaon/petrs/Data/Cubes-processed/sample9-learning/`
 
-In this experiment the size of the trigger plates (top and bottom) is larger compared to the scintillation crystal. Therefore some trigger events are produced with a very weak to empty signal. **We will name these waveforms as the "baseline" waveforms**. 
+In this experiment the size of the trigger plates (top and bottom) is larger compared to the scintillation crystal. Therefore some trigger events are produced with a very weak to empty signal. **We will name these waveforms as the "baseline" waveforms**. A few of the "baseline" waveforms are visualized on the figure below:
+
+<figure>
+  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/noise.png" alt="Example set of baseline specrtra to be classified with AI ROOT TMVA" />
+</figure>
 
 On the other hand, when incident particle hits both trigger plates and the scintillation crystal, we obtain a waveform containing Cerenkov and (possibly) scintillation information.  **We will refer these waveforms as the "event" waveforms**. 
 
@@ -176,12 +180,18 @@ where `<weight-folder>` is a directory path where the weight files are stored, `
 
 Program outputs the classification information in the Terminal and additionally saves classification results in the output `TMVApp.root` file.
 
-## Future goals
+## Conclusion
 
-"Baseline" spectra are visualized on the image below:
+In this work we successfully applied Machine Learning (ML) techniques to perform binary classification of the oscilloscope spectra upon their shape. 
 
-<figure>
-  <img src="https://raw.githubusercontent.com/petrstepanov/dual-readout-tmva/main/resources/noise.png" alt="Example set of baseline specrtra to be classified with AI ROOT TMVA" />
-</figure>
+* **First group** of spectra are obtaines from a crystal without scintillation centers (CUA sample #6). These waveforms contain only Cerenkov signal.
 
-Technically a multi-class classification can be performed to effectively train the model to segregate the "baseline" spectra into a separate third group of signals. This will lift the necessity of filtering the "baseline" spectra prior to preforming the ML analysis.
+* **Second group** of spectra are obtained from a scintillator block (CUA sample #9). These waveforms represent superimposed Cerenkov and scintillation tail signals.
+
+Program utilizes CERN ROOT TMVA framework to perform the classification. Currently two classifier techniques are implemented: Binary Desigion Trees (BDT) and Deep Neural Network (DNN). For each individual waveform from the testing set, program outputs two float numbers corresponding to the probabilities of belonging to each group. 
+
+Classifier outputs for DNN and BDT algotithms do confirm each other for vast majority of the analyzed spectra. Therefore we can conclude that ML techniques can be successfully used for differentiating between the spectra shape and applied in the particle analysis procedure.
+
+One of the improvements of the approach outlined in article is upgrading the algotithm to support the multi-class classification. For instance, Machine Learning algorithms can be trained to recognize the "baseline" spectra and attribute them into a thid class of signals.
+
+This will lift the necessity of filtering the "baseline" spectra from the set of all spectra prior to the "learning" stage of the ML analysis.
